@@ -1,0 +1,151 @@
+from __future__ import annotations
+
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
+
+from bson import ObjectId
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+
+from app.database import COLLECTIONS, ensure_indexes, get_database, ping_database
+from app.services.cleaning import clean_records
+from app.services.ingestion import ingest_from_postgres, replace_generated_data
+from app.services.prediction import build_predictions
+from app.settings import settings
+
+
+class IngestRequest(BaseModel):
+    source: str = Field(default="generated", pattern="^(generated|postgres)$")
+    product_count: int = Field(default=15, ge=1, le=15)
+    days: int = Field(default=90, ge=15, le=365)
+
+
+class TrainRequest(BaseModel):
+    horizon_days: int = Field(default=7, ge=1, le=60)
+
+
+app = FastAPI(
+    title="FarmaExpres Micro NoSQL Predictions",
+    version="0.1.0",
+    description="Microservicio independiente para datos NoSQL, limpieza y predicciones basicas.",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+def startup() -> None:
+    ensure_indexes(get_database())
+
+
+def _serialize(value: Any) -> Any:
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, list):
+        return [_serialize(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _serialize(item) for key, item in value.items()}
+    return value
+
+
+def _latest_metrics(db) -> Optional[Dict[str, Any]]:
+    metrics = db.model_metrics.find_one(sort=[("trained_at", -1)])
+    return _serialize(metrics) if metrics else None
+
+
+@app.get("/health")
+def health() -> Dict[str, Any]:
+    try:
+        mongo_ok = ping_database()
+        db = get_database()
+        counts = {collection: db[collection].count_documents({}) for collection in COLLECTIONS}
+    except Exception as exc:  # pragma: no cover - defensive health response
+        return {"status": "degraded", "mongo": False, "error": str(exc)}
+    return {"status": "ok", "mongo": mongo_ok, "database": settings.mongo_database, "counts": counts}
+
+
+@app.post("/seed-test-data")
+def seed_test_data(request: IngestRequest = IngestRequest()) -> Dict[str, Any]:
+    db = get_database()
+    result = replace_generated_data(db, product_count=request.product_count, days=request.days)
+    return _serialize({"message": "Datos de prueba generados en MongoDB.", **result})
+
+
+@app.post("/ingest")
+def ingest(request: IngestRequest = IngestRequest()) -> Dict[str, Any]:
+    db = get_database()
+    if request.source == "postgres":
+        result = ingest_from_postgres(db, settings.relational_db_url)
+        if result["source"] == "generated":
+            result["warning"] = "RELATIONAL_DB_URL no esta configurada; se cargaron datos generados."
+    else:
+        result = replace_generated_data(db, product_count=request.product_count, days=request.days)
+    return _serialize({"message": "Ingesta finalizada.", **result})
+
+
+@app.post("/clean")
+def clean() -> Dict[str, Any]:
+    db = get_database()
+    raw_records = list(db.raw_data.find({}))
+    if not raw_records:
+        raise HTTPException(status_code=400, detail="No hay datos crudos. Ejecuta /ingest o /seed-test-data.")
+
+    cleaned_records, metrics = clean_records(raw_records)
+    db.cleaned_data.delete_many({})
+    if cleaned_records:
+        db.cleaned_data.insert_many(cleaned_records)
+
+    db.model_metrics.insert_one({"type": "cleaning", **metrics, "trained_at": datetime.utcnow()})
+    return _serialize({"message": "Limpieza finalizada.", **metrics})
+
+
+@app.post("/train")
+def train(request: TrainRequest = TrainRequest()) -> Dict[str, Any]:
+    db = get_database()
+    cleaned_records = list(db.cleaned_data.find({}))
+    if not cleaned_records:
+        raise HTTPException(status_code=400, detail="No hay datos limpios. Ejecuta /clean primero.")
+
+    snapshots = list(db.products_snapshot.find({}))
+    predictions, metrics = build_predictions(cleaned_records, snapshots, horizon_days=request.horizon_days)
+
+    db.predictions.delete_many({})
+    if predictions:
+        db.predictions.insert_many(predictions)
+    db.model_metrics.insert_one({"type": "training", **metrics})
+
+    return _serialize({"message": "Modelo recalculado.", "metrics": metrics})
+
+
+@app.get("/predictions")
+def list_predictions(limit: int = 50) -> List[Dict[str, Any]]:
+    db = get_database()
+    cursor = db.predictions.find({}).sort("predicted_demand_units", -1).limit(max(1, min(limit, 200)))
+    return _serialize(list(cursor))
+
+
+@app.get("/predictions/{product_id}")
+def get_prediction(product_id: str) -> Dict[str, Any]:
+    db = get_database()
+    prediction = db.predictions.find_one({"product_id": product_id})
+    if not prediction:
+        raise HTTPException(status_code=404, detail="Prediccion no encontrada para el producto solicitado.")
+    return _serialize(prediction)
+
+
+@app.get("/metrics")
+def metrics() -> Dict[str, Any]:
+    db = get_database()
+    latest = _latest_metrics(db)
+    if not latest:
+        return {"message": "Aun no hay metricas. Ejecuta /clean y /train."}
+    return latest

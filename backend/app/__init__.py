@@ -1,0 +1,1 @@
+"""FarmaExpres NoSQL prediction microservice."""
