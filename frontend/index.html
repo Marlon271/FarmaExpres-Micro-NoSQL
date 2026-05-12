@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FarmaExpres Predictions</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">FarmaExpres NoSQL</p>
+          <h1>Predicciones de inventario</h1>
+        </div>
+        <div class="service-chip" id="service-status">Comprobando servicio</div>
+      </header>
+
+      <section class="toolbar" aria-label="Acciones principales">
+        <button id="health-btn" type="button">Estado</button>
+        <button id="seed-btn" type="button">Cargar datos</button>
+        <button id="clean-btn" type="button">Limpiar</button>
+        <button id="train-btn" type="button">Predecir</button>
+        <button id="refresh-btn" type="button">Actualizar</button>
+      </section>
+
+      <section class="summary-grid" aria-label="Resumen del modelo">
+        <article class="summary-card">
+          <span>Crudos</span>
+          <strong id="raw-count">0</strong>
+        </article>
+        <article class="summary-card">
+          <span>Limpios</span>
+          <strong id="clean-count">0</strong>
+        </article>
+        <article class="summary-card">
+          <span>Predicciones</span>
+          <strong id="prediction-count">0</strong>
+        </article>
+        <article class="summary-card">
+          <span>Riesgo alto</span>
+          <strong id="high-risk-count">0</strong>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <div class="panel">
+          <div class="panel-heading">
+            <h2>Demanda esperada</h2>
+            <span id="last-trained">Sin entrenamiento</span>
+          </div>
+          <div class="chart" id="demand-chart"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-heading">
+            <h2>Mayor demanda</h2>
+            <span>Top medicamentos</span>
+          </div>
+          <div class="top-list" id="top-list"></div>
+        </div>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-heading">
+          <h2>Predicciones</h2>
+          <span id="table-state">Esperando datos</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Medicamento</th>
+                <th>Codigo</th>
+                <th>Stock</th>
+                <th>Demanda 7 dias</th>
+                <th>Agotamiento</th>
+                <th>Riesgo</th>
+              </tr>
+            </thead>
+            <tbody id="predictions-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="message" id="message"></p>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
