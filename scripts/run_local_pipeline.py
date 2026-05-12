@@ -22,8 +22,8 @@ def call(api_base, method, path, payload=None):
 def main():
     parser = argparse.ArgumentParser(description="Run seed, clean, train and read predictions.")
     parser.add_argument("--api", default="http://localhost:8000", help="Prediction API base URL.")
-    parser.add_argument("--products", type=int, default=15, help="Number of demo products.")
-    parser.add_argument("--days", type=int, default=120, help="Number of movement history days.")
+    parser.add_argument("--products", type=int, default=80, help="Number of demo products.")
+    parser.add_argument("--days", type=int, default=180, help="Number of movement history days.")
     args = parser.parse_args()
 
     steps = [

@@ -5,22 +5,32 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Tuple
 
 
-PRODUCT_NAMES = [
-    ("ACM-001", "Acetaminophen 500mg", "Analgesicos"),
-    ("IBU-001", "Ibuprofen 400mg", "Antiinflamatorios"),
-    ("LOT-001", "Loratadina 10 mg", "Antialergicos"),
-    ("AMX-001", "Amoxicillin 500mg", "Antibioticos"),
-    ("OMP-001", "Omeprazol 20 mg", "Gastrointestinal"),
-    ("DCF-001", "Diclofenaco 50 mg", "Antiinflamatorios"),
-    ("VIC-001", "Vitamina C 1 g", "Vitaminas"),
-    ("SAT-001", "Salbutamol Inhalador", "Respiratorio"),
-    ("MET-001", "Metformina 850 mg", "Cronicos"),
-    ("SIM-001", "Simvastatina 20 mg", "Cronicos"),
-    ("LOS-001", "Losartan 50 mg", "Cronicos"),
-    ("INS-001", "Insulina NPH", "Cronicos"),
-    ("AZT-001", "Azitromicina 500 mg", "Antibioticos"),
-    ("CTZ-001", "Cetirizina 10 mg", "Antialergicos"),
-    ("NPR-001", "Naproxeno 250 mg", "Antiinflamatorios"),
+PRODUCT_TEMPLATES = [
+    ("Acetaminofen", "500 mg", "TABLETA", "Analgesicos"),
+    ("Ibuprofeno", "400 mg", "TABLETA", "Antiinflamatorios"),
+    ("Loratadina", "10 mg", "TABLETA", "Antialergicos"),
+    ("Amoxicilina", "500 mg", "CAPSULA", "Antibioticos"),
+    ("Omeprazol", "20 mg", "CAPSULA", "Gastrointestinal"),
+    ("Diclofenaco", "50 mg", "TABLETA", "Antiinflamatorios"),
+    ("Vitamina C", "1 g", "TABLETA", "Vitaminas"),
+    ("Salbutamol", "100 mcg", "INHALADOR", "Respiratorio"),
+    ("Metformina", "850 mg", "TABLETA", "Cronicos"),
+    ("Simvastatina", "20 mg", "TABLETA", "Cronicos"),
+    ("Losartan", "50 mg", "TABLETA", "Cronicos"),
+    ("Insulina NPH", "100 UI", "VIAL", "Cronicos"),
+    ("Azitromicina", "500 mg", "TABLETA", "Antibioticos"),
+    ("Cetirizina", "10 mg", "TABLETA", "Antialergicos"),
+    ("Naproxeno", "250 mg", "TABLETA", "Antiinflamatorios"),
+    ("Clotrimazol", "1%", "CREMA", "Dermatologicos"),
+    ("Enalapril", "20 mg", "TABLETA", "Cronicos"),
+    ("Hidroclorotiazida", "25 mg", "TABLETA", "Cronicos"),
+    ("Fluconazol", "150 mg", "CAPSULA", "Antimicoticos"),
+    ("Prednisolona", "5 mg", "TABLETA", "Corticoides"),
+    ("Dexametasona", "4 mg", "AMPOLLA", "Corticoides"),
+    ("Suero oral", "60 mEq", "SOBRE", "Hidratacion"),
+    ("Alcohol antiseptico", "70%", "FRASCO", "Aseo"),
+    ("Acido folico", "1 mg", "TABLETA", "Vitaminas"),
+    ("Sulfato ferroso", "300 mg", "TABLETA", "Suplementos"),
 ]
 
 
@@ -29,17 +39,23 @@ def _random_price(rng: random.Random) -> float:
 
 
 def generate_synthetic_data(
-    product_count: int = 15,
-    days: int = 90,
+    product_count: int = 80,
+    days: int = 180,
     seed: int = 271,
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     rng = random.Random(seed)
     today = date.today()
-    selected = PRODUCT_NAMES[: max(1, min(product_count, len(PRODUCT_NAMES)))]
+    selected = []
+    for index in range(1, max(1, product_count) + 1):
+        base_name, strength, dosage_form, category = PRODUCT_TEMPLATES[(index - 1) % len(PRODUCT_TEMPLATES)]
+        cycle = (index - 1) // len(PRODUCT_TEMPLATES)
+        suffix = "" if cycle == 0 else f" L{cycle + 1}"
+        code = f"FXN-{index:04d}"
+        selected.append((code, f"{base_name} {strength}{suffix}", dosage_form, category))
     raw_records: List[Dict[str, Any]] = []
     snapshots: List[Dict[str, Any]] = []
 
-    for index, (code, name, category) in enumerate(selected, start=1):
+    for index, (code, name, dosage_form, category) in enumerate(selected, start=1):
         base_demand = rng.randint(1, 9)
         current_stock = rng.randint(8, 180)
         minimum_stock = rng.randint(8, 25)
@@ -54,6 +70,7 @@ def generate_synthetic_data(
                 "product_code": code,
                 "product_name": name,
                 "category": category,
+                "forma_farmaceutica": dosage_form,
                 "current_stock": current_stock,
                 "minimum_stock": minimum_stock,
                 "stock_maximo": max_stock,
@@ -79,6 +96,7 @@ def generate_synthetic_data(
                         "product_code": code,
                         "product_name": name,
                         "category": category,
+                        "forma_farmaceutica": dosage_form,
                         "movement_type": "Exit",
                         "amount": demand,
                         "movement_date": movement_day.isoformat(),
@@ -100,6 +118,7 @@ def generate_synthetic_data(
                         "product_code": code,
                         "product_name": name,
                         "category": category,
+                        "forma_farmaceutica": dosage_form,
                         "movement_type": "Entrance",
                         "amount": entrance_amount,
                         "movement_date": movement_day.isoformat(),

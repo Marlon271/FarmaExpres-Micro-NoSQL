@@ -73,8 +73,8 @@ def sql_text(product_count, days, seed):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate FarmaExpres inventory SQL test data.")
-    parser.add_argument("--products", type=int, default=40)
-    parser.add_argument("--days", type=int, default=120)
+    parser.add_argument("--products", type=int, default=100)
+    parser.add_argument("--days", type=int, default=180)
     parser.add_argument("--seed", type=int, default=271)
     parser.add_argument("--output", default="scripts/output/farmaexpres_inventory_test_data.sql")
     args = parser.parse_args()

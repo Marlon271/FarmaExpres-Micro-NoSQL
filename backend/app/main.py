@@ -17,8 +17,8 @@ from app.settings import settings
 
 class IngestRequest(BaseModel):
     source: str = Field(default="generated", pattern="^(generated|postgres)$")
-    product_count: int = Field(default=15, ge=1, le=15)
-    days: int = Field(default=90, ge=15, le=365)
+    product_count: int = Field(default=80, ge=1, le=200)
+    days: int = Field(default=180, ge=15, le=730)
 
 
 class TrainRequest(BaseModel):
@@ -57,8 +57,9 @@ def _serialize(value: Any) -> Any:
     return value
 
 
-def _latest_metrics(db) -> Optional[Dict[str, Any]]:
-    metrics = db.model_metrics.find_one(sort=[("trained_at", -1)])
+def _latest_metrics(db, metric_type: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    query = {"type": metric_type} if metric_type else {}
+    metrics = db.model_metrics.find_one(query, sort=[("trained_at", -1)])
     return _serialize(metrics) if metrics else None
 
 
@@ -70,7 +71,19 @@ def health() -> Dict[str, Any]:
         counts = {collection: db[collection].count_documents({}) for collection in COLLECTIONS}
     except Exception as exc:  # pragma: no cover - defensive health response
         return {"status": "degraded", "mongo": False, "error": str(exc)}
-    return {"status": "ok", "mongo": mongo_ok, "database": settings.mongo_database, "counts": counts}
+    ready_to_clean = counts["raw_data"] > 0
+    ready_to_train = counts["cleaned_data"] > 0
+    return {
+        "status": "ok",
+        "mongo": mongo_ok,
+        "database": settings.mongo_database,
+        "counts": counts,
+        "pipeline": {
+            "ready_to_clean": ready_to_clean,
+            "ready_to_train": ready_to_train,
+            "has_predictions": counts["predictions"] > 0,
+        },
+    }
 
 
 @app.post("/seed-test-data")
@@ -147,5 +160,17 @@ def metrics() -> Dict[str, Any]:
     db = get_database()
     latest = _latest_metrics(db)
     if not latest:
-        return {"message": "Aun no hay metricas. Ejecuta /clean y /train."}
-    return latest
+        return {
+            "message": "Aun no hay metricas. Ejecuta /clean y /train.",
+            "model_explanation": "Predice demanda a 7 dias usando promedio movil de salidas historicas.",
+        }
+    return {
+        "latest": latest,
+        "latest_cleaning": _latest_metrics(db, "cleaning"),
+        "latest_training": _latest_metrics(db, "training"),
+        "total_metrics": db.model_metrics.count_documents({}),
+        "model_explanation": (
+            "Predice demanda esperada por medicamento para los proximos dias, estima riesgo de agotamiento "
+            "y prioriza reposicion usando movimientos tipo Exit como demanda historica."
+        ),
+    }
