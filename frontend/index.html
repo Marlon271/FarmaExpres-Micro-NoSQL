@@ -11,17 +11,35 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">FarmaExpres NoSQL</p>
-          <h1>Predicciones de inventario</h1>
+          <h1>Planeacion predictiva de inventario</h1>
         </div>
         <div class="service-chip" id="service-status">Comprobando servicio</div>
       </header>
 
       <section class="toolbar" aria-label="Acciones principales">
-        <button id="health-btn" type="button">Estado</button>
-        <button id="seed-btn" type="button">Cargar datos</button>
-        <button id="clean-btn" type="button">Limpiar</button>
-        <button id="train-btn" type="button">Predecir</button>
-        <button id="refresh-btn" type="button">Actualizar</button>
+        <button id="health-btn" type="button">Ver estado</button>
+        <button id="seed-btn" type="button">Cargar datos de prueba</button>
+        <button id="clean-btn" type="button">Limpiar datos</button>
+        <button id="train-btn" type="button">Generar prediccion</button>
+        <button id="refresh-btn" type="button">Refrescar tablero</button>
+      </section>
+
+      <section class="notice-grid" aria-label="Estado operativo">
+        <article class="notice-panel">
+          <div>
+            <span class="label">Prediccion activa</span>
+            <strong>Demanda esperada para los proximos 7 dias</strong>
+          </div>
+          <p>
+            Usa las salidas historicas de inventario como senal de demanda, calcula un promedio movil
+            de 30 dias y marca medicamentos que podrian agotarse antes de cubrir la demanda estimada.
+          </p>
+        </article>
+        <article class="status-panel">
+          <span class="label">Estado del flujo</span>
+          <strong id="pipeline-state">Esperando revision</strong>
+          <p id="status-detail">Usa Ver estado para consultar MongoDB, colecciones y disponibilidad del modelo.</p>
+        </article>
       </section>
 
       <section class="summary-grid" aria-label="Resumen del modelo">
@@ -41,6 +59,10 @@
           <span>Riesgo alto</span>
           <strong id="high-risk-count">0</strong>
         </article>
+        <article class="summary-card">
+          <span>Error medio</span>
+          <strong id="mae-value">--</strong>
+        </article>
       </section>
 
       <section class="content-grid">
@@ -54,8 +76,8 @@
 
         <div class="panel">
           <div class="panel-heading">
-            <h2>Mayor demanda</h2>
-            <span>Top medicamentos</span>
+            <h2>Prioridad de reposicion</h2>
+            <span>Mayor demanda y riesgo</span>
           </div>
           <div class="top-list" id="top-list"></div>
         </div>
@@ -74,13 +96,23 @@
                 <th>Codigo</th>
                 <th>Stock</th>
                 <th>Demanda 7 dias</th>
-                <th>Agotamiento</th>
+                <th>Dias hasta agotarse</th>
                 <th>Riesgo</th>
               </tr>
             </thead>
             <tbody id="predictions-body"></tbody>
           </table>
         </div>
+      </section>
+
+      <section class="activity-panel" aria-label="Mensajes del proceso">
+        <div class="panel-heading">
+          <h2>Mensajes del proceso</h2>
+          <span id="message-state">Listo</span>
+        </div>
+        <ol id="activity-log">
+          <li>Tablero iniciado. Revisa el estado o carga datos de prueba para comenzar.</li>
+        </ol>
       </section>
 
       <p class="message" id="message"></p>
