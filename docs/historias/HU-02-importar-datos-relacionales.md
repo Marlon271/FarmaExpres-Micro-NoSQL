@@ -1,0 +1,21 @@
+# HU-02 - Importar datos desde la base relacional
+
+## Historia
+
+Como desarrollador, quiero traer datos relevantes desde la base relacional del backend, con el fin de usarlos como entrada para limpieza y analisis predictivo.
+
+## Contexto
+
+La base relacional util para prediccion esta en `farmaexpres_inventory`. Las tablas revisadas son `product`, `batch` y `motion`. No se encontro una tabla formal de ventas, por eso las salidas de inventario (`Exit`) se tratan como demanda aproximada.
+
+## Alcance
+
+- Leer PostgreSQL solo cuando `RELATIONAL_DB_URL` este configurada.
+- Guardar los registros importados en `raw_data`.
+- Guardar productos actuales en `products_snapshot`.
+
+## Criterios de aceptacion
+
+- `POST /ingest` acepta `{"source":"postgres"}`.
+- Si PostgreSQL no esta configurado, el endpoint no falla la demo y usa datos generados.
+- El backend principal no se modifica.
