@@ -3,35 +3,35 @@
 ## Must have - Se hizo
 
 - MongoDB en Docker Compose con volumen persistente.
-- Backend FastAPI con endpoints de salud, ingesta, limpieza, entrenamiento, predicciones y metricas.
+- Backend FastAPI con endpoints de salud, ingesta, limpieza, entrenamiento, predicciones y métricas.
 - Colecciones `raw_data`, `cleaned_data`, `predictions`, `model_metrics` y `products_snapshot`.
-- Generacion de datos de prueba amplia: 80 productos y 180 dias por defecto.
+- Generación de datos de prueba amplia: 80 productos y 180 días por defecto.
 - Limpieza inicial: duplicados, nombres, fechas, cantidades negativas, stock y registros incompletos.
-- Prediccion inicial de demanda a 7 dias usando promedio movil de 30 dias.
+- Predicción inicial de demanda a 7 días usando promedio móvil de 30 días.
 - Riesgo de agotamiento por producto.
-- Frontend pequeno con estado, mensajes del proceso, grafica, tabla y prioridad de reposicion.
-- Documentacion de ejecucion por plantillas `.env.dev.example`, `.env.qa.example` y `.env.main.example`.
+- Frontend pequeño con estado, mensajes del proceso, gráfica, tabla y prioridad de reposición.
+- Documentación de ejecución por plantillas `.env.dev.example`, `.env.qa.example` y `.env.main.example`.
 
 ## Should have - Falta por mejorar
 
-- Ingesta periodica automatica desde PostgreSQL.
-- Separar ventas reales de ajustes cuando el backend principal tenga una tabla formal de ventas u ordenes.
-- Mejorar metricas con validacion temporal mas clara y comparacion por producto.
-- Agregar filtros por categoria, riesgo y horizonte de prediccion.
+- Ingesta periódica automática desde PostgreSQL.
+- Separar ventas reales de ajustes cuando el backend principal tenga una tabla formal de ventas u órdenes.
+- Mejorar métricas con validación temporal más clara y comparación por producto.
+- Agregar filtros por categoría, riesgo y horizonte de predicción.
 - Crear pruebas automatizadas de endpoints.
 
-## Could have - Podria agregarse despues
+## Could have - Podría agregarse después
 
-- Modelo con regresion lineal o scikit-learn si hay mas datos reales.
-- Exportacion CSV/Excel de predicciones.
+- Modelo con regresión lineal o scikit-learn si hay más datos reales.
+- Exportación CSV/Excel de predicciones.
 - Alertas por vencimiento combinadas con demanda.
 - Programar entrenamiento diario.
-- Autenticacion si se integra al gateway principal.
+- Autenticación si se integra al gateway principal.
 
-## Won't have for now - No se completo en esta version
+## Won't have for now - No se completó en esta versión
 
-- No se modifico el backend principal.
-- No se creo una integracion definitiva con el API Gateway de FarmaExpres.
-- No se entreno un modelo avanzado de machine learning.
-- No se usaron datos reales de produccion.
-- No se implemento un frontend escalable; es un tablero de validacion del microservicio.
+- No se modificó el backend principal.
+- No se creó una integración definitiva con el API Gateway de FarmaExpres.
+- No se entrenó un modelo avanzado de machine learning.
+- No se usaron datos reales de producción.
+- No se implementó un frontend escalable; es un tablero de validación del microservicio.

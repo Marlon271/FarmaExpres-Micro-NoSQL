@@ -1,14 +1,14 @@
-# Arquitectura y analisis inicial
+# Arquitectura y análisis inicial
 
 ## Repos revisados
 
-Se clono `https://github.com/FarmaExpres/FarmaExpres.git` como referencia general. Ese repositorio funciona como hub/documentacion del ecosistema y no trae el backend operativo ni `docker-compose.yml` del sistema.
+Se clonó `https://github.com/FarmaExpres/FarmaExpres.git` como referencia general. Ese repositorio funciona como hub/documentación del ecosistema y no trae el backend operativo ni `docker-compose.yml` del sistema.
 
-La referencia tecnica local que si contiene backend, Docker, Liquibase y tablas es `../FarmaExpres_Backend`.
+La referencia técnica local que sí contiene backend, Docker, Liquibase y tablas es `../FarmaExpres_Backend`.
 
-Tambien se revisaron ramas remotas de backend y frontend. Ambos usan `Develop`, `QA` y `main`, por eso este repositorio nuevo se dejo trabajando en `Develop`.
+También se revisaron ramas remotas de backend y frontend. Ambos usan `Develop`, `QA` y `main`, por eso este repositorio nuevo se dejó trabajando en `Develop`.
 
-## Como corre el backend principal
+## Cómo corre el backend principal
 
 El backend principal se ejecuta desde `FarmaExpres_Backend` con:
 
@@ -16,7 +16,7 @@ El backend principal se ejecuta desde `FarmaExpres_Backend` con:
 docker compose --env-file .env.dev up -d --build
 ```
 
-Tambien existen plantillas para `.env.qa` y `.env.main`. La diferencia esta en los puertos publicados al host:
+También existen plantillas para `.env.qa` y `.env.main`. La diferencia está en los puertos publicados al host:
 
 - `dev`: gateway `8080`, inventory `8082`, postgres `5433`.
 - `qa`: gateway `9080`, inventory `9082`, postgres `6433`.
@@ -34,7 +34,7 @@ Servicios principales:
 - `alert-service`: Node/Express en `8083`.
 - `api-gateway`: Spring Boot en `8080`.
 
-## Donde esta el backend
+## Dónde está el backend
 
 En `FarmaExpres_Backend`:
 
@@ -43,9 +43,9 @@ En `FarmaExpres_Backend`:
 - `alert-service/`
 - `api-gateway/`
 
-## Donde esta Liquibase
+## Dónde está Liquibase
 
-Liquibase esta versionado en:
+Liquibase está versionado en:
 
 - `database/auth/changelog-master.yaml`
 - `database/inventory/changelog-master.yaml`
@@ -56,38 +56,38 @@ Liquibase esta versionado en:
 
 Docker Compose monta `./database` y ejecuta los contenedores `liquibase-auth` y `liquibase-inventory` antes de levantar los servicios.
 
-## Tablas relacionales utiles
+## Tablas relacionales útiles
 
 Base `farmaexpres_inventory`:
 
-- `product`: medicamentos, codigo, stock, precio, stock minimo, fecha de vencimiento y datos farmaceuticos.
+- `product`: medicamentos, código, stock, precio, stock mínimo, fecha de vencimiento y datos farmacéuticos.
 - `batch`: lotes por producto, stock inicial, stock disponible y fecha de vencimiento.
-- `motion`: movimientos de inventario. El tipo `Exit` se toma como salida/venta simulada para demanda; `Entrance` como reposicion.
+- `motion`: movimientos de inventario. El tipo `Exit` se toma como salida/venta simulada para demanda; `Entrance` como reposición.
 
 Base `farmaexpres_users`:
 
 - `role`: roles.
 - `users`: usuarios del sistema.
-- `binnacle`: auditoria de acciones.
-- `refresh_token`: tokens de sesion.
+- `binnacle`: auditoría de acciones.
+- `refresh_token`: tokens de sesión.
 
-No se encontro una tabla especifica de ventas u ordenes en la estructura actual. Para el primer modelo se usa `motion.type = 'Exit'` como aproximacion de demanda o venta.
+No se encontró una tabla específica de ventas u órdenes en la estructura actual. Para el primer modelo se usa `motion.type = 'Exit'` como aproximación de demanda o venta.
 
-## Datos utiles para el modelo predictivo
+## Datos útiles para el modelo predictivo
 
-- Nombre, codigo y categoria del producto.
-- Stock actual y stock minimo.
+- Nombre, código y categoría del producto.
+- Stock actual y stock mínimo.
 - Lotes y vencimientos.
-- Movimientos historicos por fecha.
+- Movimientos históricos por fecha.
 - Cantidades de salida (`Exit`) por producto.
-- Entradas (`Entrance`) para entender reposicion.
+- Entradas (`Entrance`) para entender reposición.
 
-Con esos campos se puede estimar demanda por promedio movil, productos con mayor salida y riesgo de agotamiento. No se afirma que sean ventas reales porque la tabla disponible es de movimientos de inventario.
+Con esos campos se puede estimar demanda por promedio móvil, productos con mayor salida y riesgo de agotamiento. No se afirma que sean ventas reales porque la tabla disponible es de movimientos de inventario.
 
 ## Arquitectura del nuevo microservicio
 
 ```text
-Frontend estatico
+Frontend estático
   -> FastAPI backend
       -> MongoDB
       -> PostgreSQL FarmaExpres solo en modo pruebas locales
@@ -98,7 +98,7 @@ Colecciones MongoDB:
 - `raw_data`: datos crudos importados o generados.
 - `cleaned_data`: datos normalizados y validados.
 - `predictions`: predicciones por producto.
-- `model_metrics`: metricas de limpieza y entrenamiento.
-- `products_snapshot`: copia de productos relevante para el analisis.
+- `model_metrics`: métricas de limpieza y entrenamiento.
+- `products_snapshot`: copia de productos relevante para el análisis.
 
-El microservicio no modifica el backend principal. Solo lee datos si se configura la conexion relacional.
+El microservicio no modifica el backend principal. Solo lee datos si se configura la conexión relacional.
