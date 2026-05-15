@@ -2,11 +2,11 @@
 
 ## Historia
 
-Como desarrollador, quiero traer datos relevantes desde la base relacional del backend, con el fin de usarlos como entrada para limpieza y analisis predictivo.
+Como desarrollador, quiero traer datos relevantes desde la base relacional del backend, con el fin de usarlos como entrada para limpieza y análisis predictivo.
 
 ## Contexto
 
-La base relacional util para prediccion esta en `farmaexpres_inventory`. Las tablas revisadas son `product`, `batch` y `motion`. No se encontro una tabla formal de ventas, por eso las salidas de inventario (`Exit`) se tratan como demanda aproximada.
+La base relacional útil para predicción está en `farmaexpres_inventory`. Las tablas revisadas son `product`, `batch` y `motion`. No se encontró una tabla formal de ventas, por eso las salidas de inventario (`Exit`) se tratan como demanda aproximada.
 
 ## Alcance
 
@@ -14,8 +14,8 @@ La base relacional util para prediccion esta en `farmaexpres_inventory`. Las tab
 - Guardar los registros importados en `raw_data`.
 - Guardar productos actuales en `products_snapshot`.
 
-## Criterios de aceptacion
+## Criterios de aceptación
 
 - `POST /ingest` acepta `{"source":"postgres"}`.
-- Si PostgreSQL no esta configurado, el endpoint no falla la demo y usa datos generados.
+- Si PostgreSQL no está configurado, el endpoint no falla la demo y usa datos generados.
 - El backend principal no se modifica.

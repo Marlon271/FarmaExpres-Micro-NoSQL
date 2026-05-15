@@ -6,15 +6,15 @@ Como usuario del sistema, quiero obtener predicciones sobre demanda o inventario
 
 ## Contexto
 
-La primera version usa una tecnica simple y explicable: promedio movil de 30 dias con las salidas historicas. El resultado no promete exactitud comercial; sirve como indicador inicial de reposicion.
+La primera versión usa una técnica simple y explicable: promedio móvil de 30 días con las salidas históricas. El resultado no promete exactitud comercial; sirve como indicador inicial de reposición.
 
 ## Alcance
 
-- Calcular demanda estimada para 7 dias.
-- Estimar dias hasta agotamiento cuando exista consumo historico.
+- Calcular demanda estimada para 7 días.
+- Estimar días hasta agotamiento cuando exista consumo histórico.
 - Clasificar riesgo como `LOW`, `MEDIUM`, `HIGH` u `OUT_OF_STOCK`.
 
-## Criterios de aceptacion
+## Criterios de aceptación
 
 - `POST /train` genera predicciones.
 - `GET /predictions` lista resultados.

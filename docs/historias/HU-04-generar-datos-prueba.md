@@ -6,16 +6,16 @@ Como desarrollador, quiero inyectar una cantidad considerable de datos de prueba
 
 ## Contexto
 
-La semilla actual del backend tiene pocos medicamentos y pocos movimientos. Para demostrar analitica se necesitan mas productos y mas historial.
+La semilla actual del backend tiene pocos medicamentos y pocos movimientos. Para demostrar analítica se necesitan más productos y más historial.
 
 ## Alcance
 
-- Generar 80 medicamentos y 180 dias de movimientos desde la API.
+- Generar 80 medicamentos y 180 días de movimientos desde la API.
 - Generar SQL opcional para PostgreSQL local.
-- Simular entradas, salidas, stock, categorias, lotes y fechas.
+- Simular entradas, salidas, stock, categorías, lotes y fechas.
 
-## Criterios de aceptacion
+## Criterios de aceptación
 
 - `POST /seed-test-data` carga datos suficientes en MongoDB.
 - `scripts/generate_relational_test_data.py` crea SQL para la base `farmaexpres_inventory`.
-- La documentacion aclara que los datos no son productivos.
+- La documentación aclara que los datos no son productivos.
