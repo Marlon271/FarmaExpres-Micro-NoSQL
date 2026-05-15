@@ -1,36 +1,36 @@
 # FarmaExpres Micro NoSQL
 
-Microservicio independiente para analitica predictiva de inventario en FarmaExpres. No reemplaza el backend principal ni modifica sus servicios; toma datos de inventario, los almacena en MongoDB, los limpia y genera una prediccion inicial para apoyar decisiones de reposicion.
+Microservicio independiente para analítica predictiva de inventario en FarmaExpres. No reemplaza el backend principal ni modifica sus servicios; toma datos de inventario, los almacena en MongoDB, los limpia y genera una predicción inicial para apoyar decisiones de reposición.
 
 El desarrollo se trabaja en `Develop`, con ramas `QA` y `main` para mantener el mismo orden usado en los repos de backend y frontend.
 
-## Que hace este modulo
+## Qué hace este módulo
 
 1. Carga datos crudos desde datos simulados o desde PostgreSQL local de `FarmaExpres_Backend`.
-2. Guarda esos datos en MongoDB en la coleccion `raw_data`.
+2. Guarda esos datos en MongoDB en la colección `raw_data`.
 3. Limpia y normaliza campos importantes: nombres, fechas, cantidades, stock, duplicados y registros incompletos.
 4. Guarda el resultado en `cleaned_data`.
-5. Calcula demanda esperada por medicamento para los proximos 7 dias usando promedio movil de salidas historicas.
-6. Marca riesgo de agotamiento segun stock actual, stock minimo y demanda proyectada.
-7. Muestra estado, mensajes del proceso, metricas, tabla y grafica en un frontend pequeno.
+5. Calcula demanda esperada por medicamento para los próximos 7 días usando promedio móvil de salidas históricas.
+6. Marca riesgo de agotamiento según stock actual, stock mínimo y demanda proyectada.
+7. Muestra estado, mensajes del proceso, métricas, tabla y gráfica en un frontend pequeño.
 
-Importante: como el backend actual no tiene tabla formal de ventas u ordenes, el modelo usa `motion.type = 'Exit'` como aproximacion de demanda. Esto queda documentado para no presentar los resultados como ventas reales.
+Importante: como el backend actual no tiene tabla formal de ventas u órdenes, el modelo usa `motion.type = 'Exit'` como aproximación de demanda. Esto queda documentado para no presentar los resultados como ventas reales.
 
 ## Stack
 
 - Backend: Python + FastAPI.
 - Base NoSQL: MongoDB.
-- Modelo predictivo: promedio movil de 30 dias sobre salidas de inventario.
-- Frontend: HTML, CSS y JavaScript estatico servido con Nginx.
-- Ejecucion local: Docker Compose.
+- Modelo predictivo: promedio móvil de 30 días sobre salidas de inventario.
+- Frontend: HTML, CSS y JavaScript estático servido con Nginx.
+- Ejecución local: Docker Compose.
 
 ## Estructura
 
 ```text
-backend/      API, ingesta, limpieza, MongoDB y prediccion.
-frontend/     Tablero simple para estado, metricas, alertas y predicciones.
-scripts/      Generacion de datos y pipeline local.
-docs/         Historias, arquitectura, endpoints, modelo, MoSCoW e integracion.
+backend/      API, ingesta, limpieza, MongoDB y predicción.
+frontend/     Tablero simple para estado, métricas, alertas y predicciones.
+scripts/      Generación de datos y pipeline local.
+docs/         Historias, arquitectura, endpoints, modelo, libro NoSQL, ABP e integración.
 docker-compose.yml
 .env.dev.example   Plantilla del entorno local dev.
 .env.qa.example    Plantilla del entorno local qa.
@@ -45,7 +45,7 @@ Primero crea el archivo local de entorno que vayas a usar:
 cp .env.dev.example .env.dev
 ```
 
-Si vas a leer PostgreSQL de `FarmaExpres_Backend`, llena `RELATIONAL_DB_URL` siguiendo el ejemplo comentado en la plantilla y cambia `CHANGE_ME` por la clave local de PostgreSQL. Si solo vas a usar datos simulados, deja `RELATIONAL_DB_URL` vacio.
+Si vas a leer PostgreSQL de `FarmaExpres_Backend`, llena `RELATIONAL_DB_URL` siguiendo el ejemplo comentado en la plantilla y cambia `CHANGE_ME` por la clave local de PostgreSQL. Si solo vas a usar datos simulados, deja `RELATIONAL_DB_URL` vacío.
 
 Dev:
 
@@ -87,15 +87,15 @@ curl -X POST http://localhost:8000/train -H "Content-Type: application/json" -d 
 curl http://localhost:8000/predictions
 ```
 
-Tambien se puede ejecutar:
+También se puede ejecutar:
 
 ```bash
 python3 scripts/run_local_pipeline.py --api http://localhost:8000
 ```
 
-## Integracion local con FarmaExpres_Backend
+## Integración local con FarmaExpres_Backend
 
-El backend principal se levanta asi:
+El backend principal se levanta así:
 
 ```bash
 cd ../FarmaExpres_Backend
@@ -121,20 +121,22 @@ El backend principal no se modifica. Los scripts de prueba quedan en este reposi
 
 ## Datos de prueba
 
-El endpoint `POST /seed-test-data` genera por defecto 80 medicamentos y 180 dias de movimientos. Tambien se puede generar SQL para la base relacional local:
+El endpoint `POST /seed-test-data` genera por defecto 80 medicamentos y 180 días de movimientos. También se puede generar SQL para la base relacional local:
 
 ```bash
 python3 scripts/generate_relational_test_data.py --products 100 --days 180
 ```
 
-Esos datos son artificiales y solo sirven para validar limpieza, carga NoSQL y prediccion.
+Esos datos son artificiales y solo sirven para validar limpieza, carga NoSQL y predicción.
 
-## Documentacion
+## Documentación
 
 - [Historias de usuario](docs/HISTORIAS_USUARIO.md)
-- [Arquitectura y analisis del repo principal](docs/ARQUITECTURA.md)
+- [Libro de la base NoSQL](docs/LIBRO_BASE_NOSQL.md)
+- [ABP y alcance del proyecto](docs/ABP_ALCANCE.md)
+- [Arquitectura y análisis del repo principal](docs/ARQUITECTURA.md)
 - [Endpoints](docs/ENDPOINTS.md)
 - [Modelo predictivo](docs/MODELO_PREDICTIVO.md)
-- [Integracion local](docs/INTEGRACION_LOCAL.md)
+- [Integración local](docs/INTEGRACION_LOCAL.md)
 - [MoSCoW y alcance](docs/MOSCOW.md)
 - [Trazabilidad](docs/TRAZABILIDAD.md)

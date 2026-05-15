@@ -16,4 +16,4 @@ Ejecuta estado, carga de datos generados, limpieza, entrenamiento y consulta de 
 python3 scripts/generate_relational_test_data.py --products 100 --days 180
 ```
 
-El archivo queda en `scripts/output/farmaexpres_inventory_test_data.sql`. Se puede ejecutar contra la base `farmaexpres_inventory` del backend principal cuando este corra con Docker. Estos datos no son reales de produccion.
+El archivo queda en `scripts/output/farmaexpres_inventory_test_data.sql`. Se puede ejecutar contra la base `farmaexpres_inventory` del backend principal cuando esté corriendo con Docker. Estos datos no son reales de producción.

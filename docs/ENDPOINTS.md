@@ -4,7 +4,7 @@ Base local: `http://localhost:8000`
 
 ## GET /health
 
-Valida si el backend y MongoDB responden. Tambien devuelve conteos por coleccion.
+Valida si el backend y MongoDB responden. También devuelve conteos por colección.
 
 ## POST /seed-test-data
 
@@ -60,16 +60,16 @@ Lista predicciones ordenadas por demanda esperada.
 
 ## GET /predictions/{productId}
 
-Consulta una prediccion especifica por `product_id`.
+Consulta una predicción específica por `product_id`.
 
 ## GET /metrics
 
-Muestra metricas de limpieza y entrenamiento.
+Muestra métricas de limpieza y entrenamiento.
 
 Campos principales:
 
-- `latest`: ultima metrica registrada.
-- `latest_cleaning`: ultima ejecucion de limpieza.
-- `latest_training`: ultimo entrenamiento.
-- `total_metrics`: cantidad de metricas guardadas.
+- `latest`: última métrica registrada.
+- `latest_cleaning`: última ejecución de limpieza.
+- `latest_training`: último entrenamiento.
+- `total_metrics`: cantidad de métricas guardadas.
 - `model_explanation`: resumen del uso del modelo.

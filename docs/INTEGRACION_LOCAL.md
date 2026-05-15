@@ -1,4 +1,4 @@
-# Integracion local con FarmaExpres
+# Integración local con FarmaExpres
 
 ## Objetivo
 
@@ -18,7 +18,7 @@ cd ../FarmaExpres_Backend
 docker compose --env-file .env.dev up -d --build
 ```
 
-Si `docker` no esta en el PATH:
+Si `docker` no está en el PATH:
 
 ```bash
 /Applications/Docker.app/Contents/Resources/bin/docker compose --env-file .env.dev up -d --build
@@ -40,7 +40,7 @@ cp .env.dev.example .env.dev
 docker compose --env-file .env.dev up -d --build
 ```
 
-Antes de usar la ingesta desde PostgreSQL, reemplazar `CHANGE_ME` en `.env.dev` por la clave local de PostgreSQL. Si solo se van a probar datos simulados, `RELATIONAL_DB_URL` puede quedar vacio.
+Antes de usar la ingesta desde PostgreSQL, reemplazar `CHANGE_ME` en `.env.dev` por la clave local de PostgreSQL. Si solo se van a probar datos simulados, `RELATIONAL_DB_URL` puede quedar vacío.
 
 5. Ingestar desde PostgreSQL:
 
@@ -66,4 +66,4 @@ python3 scripts/generate_relational_test_data.py --products 100 --days 180
 
 Luego ejecutar el SQL generado contra `farmaexpres_inventory`.
 
-Importante: estos datos son simulados y no se deben tratar como produccion.
+Importante: estos datos son simulados y no se deben tratar como producción.
