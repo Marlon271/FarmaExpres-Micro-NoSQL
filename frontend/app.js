@@ -8,6 +8,7 @@ const elements = {
   status: document.querySelector("#service-status"),
   pipelineState: document.querySelector("#pipeline-state"),
   statusDetail: document.querySelector("#status-detail"),
+  apiLabel: document.querySelector("#api-label"),
   rawCount: document.querySelector("#raw-count"),
   cleanCount: document.querySelector("#clean-count"),
   predictionCount: document.querySelector("#prediction-count"),
@@ -22,6 +23,7 @@ const elements = {
   messageState: document.querySelector("#message-state"),
   activityLog: document.querySelector("#activity-log"),
   buttons: Array.from(document.querySelectorAll("button")),
+  pipelineSteps: Array.from(document.querySelectorAll(".pipeline-step")),
 };
 
 let latestHealth = null;
@@ -46,14 +48,14 @@ function addActivity(text, type = "info") {
   item.className = type;
   item.textContent = text;
   elements.activityLog.prepend(item);
-  while (elements.activityLog.children.length > 6) {
+  while (elements.activityLog.children.length > 7) {
     elements.activityLog.lastElementChild.remove();
   }
 }
 
 function setMessage(text, isError = false) {
   elements.message.textContent = text;
-  elements.message.style.color = isError ? "#b91c1c" : "#64716d";
+  elements.message.className = `message ${isError ? "error" : "ok"}`;
   elements.messageState.textContent = isError ? "Revisar" : "OK";
 }
 
@@ -64,7 +66,7 @@ async function request(path, options = {}) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.detail || data.message || "Request failed");
+    throw new Error(data.detail || data.message || "La solicitud no se pudo completar.");
   }
   return data;
 }
@@ -75,21 +77,42 @@ function updateCounts(counts = {}) {
   elements.predictionCount.textContent = counts.predictions ?? 0;
 }
 
+function updatePipelineSteps(counts = {}) {
+  const active = new Set(["postgres", "extract"]);
+  if ((counts.raw_data || 0) > 0) active.add("raw");
+  if ((counts.cleaned_data || 0) > 0) {
+    active.add("raw");
+    active.add("clean");
+  }
+  if ((counts.predictions || 0) > 0) {
+    active.add("raw");
+    active.add("clean");
+    active.add("model");
+    active.add("predict");
+  }
+
+  elements.pipelineSteps.forEach((step) => {
+    const name = step.dataset.step;
+    step.classList.toggle("active", active.has(name));
+    step.classList.toggle("pending", !active.has(name));
+  });
+}
+
 function describePipeline(health) {
   const counts = health.counts || {};
   if (!health.mongo) {
-    return ["Servicio degradado", "MongoDB no respondio al chequeo del backend."];
+    return ["Servicio degradado", "MongoDB no respondió al chequeo del backend."];
   }
   if ((counts.raw_data || 0) === 0) {
-    return ["Sin datos cargados", "Carga datos de prueba o ingesta desde PostgreSQL antes de limpiar."];
+    return ["Sin datos cargados", "Ejecuta Cargar datos demo o Ingestar PostgreSQL para llenar raw_data."];
   }
   if ((counts.cleaned_data || 0) === 0) {
-    return ["Datos crudos disponibles", "Hay datos en raw_data. El siguiente paso es ejecutar la limpieza."];
+    return ["Datos crudos disponibles", "raw_data ya tiene registros. El siguiente paso es limpiar datos."];
   }
   if ((counts.predictions || 0) === 0) {
-    return ["Datos limpios listos", "La informacion esta normalizada. Ya puedes generar la prediccion."];
+    return ["Datos limpios listos", "cleaned_data ya está preparado. El siguiente paso es entrenar el modelo."];
   }
-  return ["Prediccion disponible", "El tablero muestra demanda estimada, riesgo y dias hasta agotamiento."];
+  return ["Predicción disponible", "MongoDB contiene datos crudos, datos limpios, métricas y predicciones."];
 }
 
 async function loadHealth(announce = false) {
@@ -99,8 +122,10 @@ async function loadHealth(announce = false) {
   elements.status.textContent = data.status === "ok" ? "Servicio activo" : "Servicio degradado";
   elements.status.className = `service-chip ${data.status === "ok" ? "ok" : "bad"}`;
   elements.pipelineState.textContent = state;
-  elements.statusDetail.textContent = `${detail} MongoDB: ${data.database}. API: ${API_BASE}.`;
+  elements.statusDetail.textContent = `${detail} Base NoSQL: ${data.database}.`;
+  elements.apiLabel.textContent = API_BASE;
   updateCounts(data.counts);
+  updatePipelineSteps(data.counts);
   if (announce) {
     addActivity(`Estado actualizado: ${state}.`, "success");
   }
@@ -122,7 +147,7 @@ function renderChart(predictions) {
   const maxDemand = Math.max(1, ...top.map((item) => item.predicted_demand_units || 0));
   elements.chart.innerHTML = top.length
     ? top.map((item) => {
-        const width = Math.max(3, Math.round(((item.predicted_demand_units || 0) / maxDemand) * 100));
+        const width = Math.max(4, Math.round(((item.predicted_demand_units || 0) / maxDemand) * 100));
         return `
           <div class="bar-row">
             <span class="bar-label" title="${escapeHtml(item.product_name)}">${escapeHtml(item.product_name)}</span>
@@ -131,7 +156,7 @@ function renderChart(predictions) {
           </div>
         `;
       }).join("")
-    : "<span class=\"empty-state\">Aun no hay predicciones. Carga, limpia y genera el modelo.</span>";
+    : "<span class=\"empty-state\">Aún no hay predicciones. Carga datos, limpia y entrena el modelo.</span>";
 }
 
 function renderTopList(predictions) {
@@ -147,11 +172,11 @@ function renderTopList(predictions) {
     <div class="top-item">
       <div>
         <strong>${escapeHtml(item.product_name)}</strong>
-        <span>${escapeHtml(item.category || "Sin categoria")} · demanda ${item.predicted_demand_units} uds · stock ${item.current_stock}</span>
+        <span>${escapeHtml(item.category || "Sin categoría")} · demanda ${item.predicted_demand_units} uds · stock ${item.current_stock}</span>
       </div>
       <span class="risk ${item.risk_level}">${riskLabel(item.risk_level)}</span>
     </div>
-  `).join("") || "<span class=\"empty-state\">Sin alertas. Genera predicciones para priorizar reposicion.</span>";
+  `).join("") || "<span class=\"empty-state\">Sin alertas. Entrena el modelo para priorizar reposición.</span>";
 }
 
 function renderTable(predictions) {
@@ -174,7 +199,7 @@ async function loadMetrics() {
   const data = await request("/metrics");
   const training = data.latest_training || (data.latest?.type === "training" ? data.latest : null);
   if (training?.trained_at) {
-    elements.lastTrained.textContent = new Date(training.trained_at).toLocaleString();
+    elements.lastTrained.textContent = `Entrenado: ${new Date(training.trained_at).toLocaleString()}`;
     elements.maeValue.textContent = training.average_mae ?? "--";
     return training;
   }
@@ -230,7 +255,7 @@ document.querySelector("#health-btn").addEventListener("click", async () => {
   } catch (error) {
     elements.status.textContent = "Servicio no disponible";
     elements.status.className = "service-chip bad";
-    elements.pipelineState.textContent = "Sin conexion";
+    elements.pipelineState.textContent = "Sin conexión";
     elements.statusDetail.textContent = `No se pudo contactar la API ${API_BASE}.`;
     setMessage(error.message, true);
     addActivity(`Error de estado: ${error.message}`, "error");
@@ -241,10 +266,19 @@ document.querySelector("#health-btn").addEventListener("click", async () => {
 
 document.querySelector("#seed-btn").addEventListener("click", () => {
   runAction(
-    "Carga de datos de prueba",
+    "Carga de datos demo",
     "/seed-test-data",
     { source: "generated", product_count: 80, days: 180 },
-    "Datos de prueba cargados. Ahora ejecuta la limpieza para preparar el modelo."
+    "Datos demo cargados en raw_data. Ahora limpia los registros para preparar el modelo."
+  );
+});
+
+document.querySelector("#postgres-btn").addEventListener("click", () => {
+  runAction(
+    "Ingesta desde PostgreSQL",
+    "/ingest",
+    { source: "postgres", product_count: 80, days: 180 },
+    "Ingesta terminada. Si RELATIONAL_DB_URL no está configurada, se usaron datos demo para no bloquear la prueba."
   );
 });
 
@@ -253,16 +287,16 @@ document.querySelector("#clean-btn").addEventListener("click", () => {
     "Limpieza de datos",
     "/clean",
     {},
-    "Datos limpios generados. Ya puedes crear la prediccion de demanda."
+    "Datos limpios generados en cleaned_data. Ya puedes entrenar el promedio móvil."
   );
 });
 
 document.querySelector("#train-btn").addEventListener("click", () => {
   runAction(
-    "Generacion de prediccion",
+    "Entrenamiento del modelo",
     "/train",
     { horizon_days: 7 },
-    "Prediccion lista: revisa demanda esperada, riesgo y dias hasta agotamiento."
+    "Predicción lista: revisa demanda esperada, riesgo y días hasta agotamiento."
   );
 });
 
@@ -284,7 +318,7 @@ refreshDashboard(false)
   .catch((error) => {
     elements.status.textContent = "Servicio no disponible";
     elements.status.className = "service-chip bad";
-    elements.pipelineState.textContent = "Sin conexion";
+    elements.pipelineState.textContent = "Sin conexión";
     elements.statusDetail.textContent = `No se pudo contactar la API ${API_BASE}.`;
     setMessage(`${error.message}. API: ${API_BASE}`, true);
     addActivity(`No se pudo iniciar el tablero: ${error.message}`, "error");
