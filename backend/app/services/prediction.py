@@ -132,7 +132,13 @@ def build_predictions(
             }
         )
 
-    predictions.sort(key=lambda item: (item["risk_level"] != "HIGH", -item["predicted_demand_units"]))
+    risk_order = {"OUT_OF_STOCK": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
+    predictions.sort(
+        key=lambda item: (
+            risk_order.get(item["risk_level"], 4),
+            -item["predicted_demand_units"],
+        )
+    )
     metrics = {
         "trained_at": generated_at,
         "method": "30_day_moving_average",

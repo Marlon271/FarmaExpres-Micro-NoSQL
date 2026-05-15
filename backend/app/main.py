@@ -28,7 +28,7 @@ class TrainRequest(BaseModel):
 app = FastAPI(
     title="FarmaExpres Micro NoSQL Predictions",
     version="0.1.0",
-    description="Microservicio independiente para datos NoSQL, limpieza y predicciones basicas.",
+    description="Microservicio independiente para datos NoSQL, limpieza y predicciones básicas.",
 )
 
 app.add_middleware(
@@ -99,7 +99,7 @@ def ingest(request: IngestRequest = IngestRequest()) -> Dict[str, Any]:
     if request.source == "postgres":
         result = ingest_from_postgres(db, settings.relational_db_url)
         if result["source"] == "generated":
-            result["warning"] = "RELATIONAL_DB_URL no esta configurada; se cargaron datos generados."
+            result["warning"] = "RELATIONAL_DB_URL no está configurada; se cargaron datos generados."
     else:
         result = replace_generated_data(db, product_count=request.product_count, days=request.days)
     return _serialize({"message": "Ingesta finalizada.", **result})
@@ -151,7 +151,7 @@ def get_prediction(product_id: str) -> Dict[str, Any]:
     db = get_database()
     prediction = db.predictions.find_one({"product_id": product_id})
     if not prediction:
-        raise HTTPException(status_code=404, detail="Prediccion no encontrada para el producto solicitado.")
+        raise HTTPException(status_code=404, detail="Predicción no encontrada para el producto solicitado.")
     return _serialize(prediction)
 
 
@@ -161,8 +161,8 @@ def metrics() -> Dict[str, Any]:
     latest = _latest_metrics(db)
     if not latest:
         return {
-            "message": "Aun no hay metricas. Ejecuta /clean y /train.",
-            "model_explanation": "Predice demanda a 7 dias usando promedio movil de salidas historicas.",
+            "message": "Aún no hay métricas. Ejecuta /clean y /train.",
+            "model_explanation": "Predice demanda a 7 días usando promedio móvil de salidas históricas.",
         }
     return {
         "latest": latest,
@@ -170,7 +170,7 @@ def metrics() -> Dict[str, Any]:
         "latest_training": _latest_metrics(db, "training"),
         "total_metrics": db.model_metrics.count_documents({}),
         "model_explanation": (
-            "Predice demanda esperada por medicamento para los proximos dias, estima riesgo de agotamiento "
-            "y prioriza reposicion usando movimientos tipo Exit como demanda historica."
+            "Predice demanda esperada por medicamento para los próximos días, estima riesgo de agotamiento "
+            "y prioriza reposición usando movimientos tipo Exit como demanda histórica."
         ),
     }

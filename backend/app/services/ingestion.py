@@ -13,7 +13,7 @@ def _clear_derived_collections(db: Database) -> None:
     db.predictions.delete_many({})
 
 
-def replace_generated_data(db: Database, product_count: int = 15, days: int = 90) -> Dict[str, Any]:
+def replace_generated_data(db: Database, product_count: int = 80, days: int = 180) -> Dict[str, Any]:
     raw_records, snapshots = generate_synthetic_data(product_count=product_count, days=days)
     db.raw_data.delete_many({"source": "generated"})
     db.products_snapshot.delete_many({"source": "generated"})
