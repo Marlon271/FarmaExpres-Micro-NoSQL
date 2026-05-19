@@ -27,8 +27,10 @@ def parse_date(value: Any) -> Optional[str]:
         return value.isoformat()
     if isinstance(value, str):
         clean = value.strip()
+        clean = clean[:-1] + "+00:00" if clean.endswith("Z") else clean
+        clean = re.sub(r"(\.\d{6})\d+([+-]\d{2}:?\d{2})?$", r"\1\2", clean)
         try:
-            return datetime.fromisoformat(clean.replace("Z", "+00:00")).isoformat()
+            return datetime.fromisoformat(clean).isoformat()
         except ValueError:
             try:
                 return date.fromisoformat(clean[:10]).isoformat()

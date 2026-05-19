@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
+from pymongo import ReplaceOne
 from pymongo.database import Database
 
 from app.services.sample_data import generate_synthetic_data
@@ -13,19 +14,46 @@ def _clear_derived_collections(db: Database) -> None:
     db.predictions.delete_many({})
 
 
-def replace_generated_data(db: Database, product_count: int = 80, days: int = 180) -> Dict[str, Any]:
-    raw_records, snapshots = generate_synthetic_data(product_count=product_count, days=days)
-    db.raw_data.delete_many({"source": "generated"})
-    db.products_snapshot.delete_many({"source": "generated"})
+def _replace_products_snapshot(db: Database, snapshots: List[Dict[str, Any]]) -> int:
+    operations = []
+    for snapshot in snapshots:
+        product_id = str(snapshot.get("product_id") or snapshot.get("product_code") or "").strip()
+        if not product_id:
+            continue
+        normalized_snapshot = dict(snapshot, product_id=product_id)
+        operations.append(
+            ReplaceOne(
+                {"product_id": product_id},
+                normalized_snapshot,
+                upsert=True,
+            )
+        )
+
+    if operations:
+        db.products_snapshot.bulk_write(operations, ordered=False)
+    return len(operations)
+
+
+def _replace_active_training_dataset(
+    db: Database,
+    raw_records: List[Dict[str, Any]],
+    snapshots: List[Dict[str, Any]],
+) -> int:
+    db.raw_data.delete_many({})
+    db.products_snapshot.delete_many({})
     _clear_derived_collections(db)
     if raw_records:
         db.raw_data.insert_many(raw_records)
-    if snapshots:
-        db.products_snapshot.insert_many(snapshots)
+    return _replace_products_snapshot(db, snapshots)
+
+
+def replace_generated_data(db: Database, product_count: int = 80, days: int = 180) -> Dict[str, Any]:
+    raw_records, snapshots = generate_synthetic_data(product_count=product_count, days=days)
+    products_loaded = _replace_active_training_dataset(db, raw_records, snapshots)
     return {
         "source": "generated",
         "raw_records_inserted": len(raw_records),
-        "products_inserted": len(snapshots),
+        "products_inserted": products_loaded,
         "generated_at": datetime.now(timezone.utc),
     }
 
@@ -111,18 +139,12 @@ def ingest_from_inventory_snapshot(db: Database, snapshot: Dict[str, Any]) -> Di
             for item in snapshots
         ]
 
-    db.raw_data.delete_many({"source": "inventory-service"})
-    db.products_snapshot.delete_many({"source": "inventory-service"})
-    _clear_derived_collections(db)
-    if raw_records:
-        db.raw_data.insert_many(raw_records)
-    if snapshots:
-        db.products_snapshot.insert_many(snapshots)
+    products_loaded = _replace_active_training_dataset(db, raw_records, snapshots)
 
     return {
         "source": "inventory-service",
         "raw_records_inserted": len(raw_records),
-        "products_inserted": len(snapshots),
+        "products_inserted": products_loaded,
         "movements_received": len(movements),
         "batches_received": len(batches),
         "generated_at": generated_at,
@@ -194,17 +216,11 @@ def ingest_from_postgres(db: Database, relational_db_url: str) -> Dict[str, Any]
                 for row in cursor.fetchall()
             ]
 
-    db.raw_data.delete_many({"source": "postgres"})
-    db.products_snapshot.delete_many({"source": "postgres"})
-    _clear_derived_collections(db)
-    if raw_records:
-        db.raw_data.insert_many(raw_records)
-    if snapshots:
-        db.products_snapshot.insert_many(snapshots)
+    products_loaded = _replace_active_training_dataset(db, raw_records, snapshots)
 
     return {
         "source": "postgres",
         "raw_records_inserted": len(raw_records),
-        "products_inserted": len(snapshots),
+        "products_inserted": products_loaded,
         "generated_at": datetime.now(timezone.utc),
     }

@@ -10,6 +10,12 @@ class CleaningServiceTest(unittest.TestCase):
     def test_parse_date_standardizes_iso_datetime(self):
         self.assertEqual(parse_date("2026-05-19T10:20:30Z"), "2026-05-19T10:20:30+00:00")
 
+    def test_parse_date_accepts_java_nanosecond_timestamp(self):
+        self.assertEqual(
+            parse_date("2026-05-19T14:54:06.717387180Z"),
+            "2026-05-19T14:54:06.717387+00:00",
+        )
+
     def test_clean_records_removes_duplicates_and_reports_iterator_input(self):
         raw_records = iter(
             [
