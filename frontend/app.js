@@ -1,6 +1,6 @@
 const API_BASE = new URLSearchParams(window.location.search).get("api")
   || localStorage.getItem("farmaexpresApiBase")
-  || "http://localhost:8000";
+  || "http://localhost:8085";
 
 localStorage.setItem("farmaexpresApiBase", API_BASE);
 
@@ -104,7 +104,7 @@ function describePipeline(health) {
     return ["Servicio degradado", "MongoDB no respondió al chequeo del backend."];
   }
   if ((counts.raw_data || 0) === 0) {
-    return ["Sin datos cargados", "Ejecuta Cargar datos demo o Ingestar PostgreSQL para llenar raw_data."];
+    return ["Sin datos cargados", "Ejecuta Cargar datos de prueba o sincroniza una fuente local para llenar raw_data."];
   }
   if ((counts.cleaned_data || 0) === 0) {
     return ["Datos crudos disponibles", "raw_data ya tiene registros. El siguiente paso es limpiar datos."];
@@ -266,10 +266,10 @@ document.querySelector("#health-btn").addEventListener("click", async () => {
 
 document.querySelector("#seed-btn").addEventListener("click", () => {
   runAction(
-    "Carga de datos demo",
+    "Carga de datos de prueba",
     "/seed-test-data",
     { source: "generated", product_count: 80, days: 180 },
-    "Datos demo cargados en raw_data. Ahora limpia los registros para preparar el modelo."
+    "Datos de prueba cargados en raw_data. Ahora limpia los registros para preparar el modelo."
   );
 });
 
@@ -278,7 +278,7 @@ document.querySelector("#postgres-btn").addEventListener("click", () => {
     "Ingesta desde PostgreSQL",
     "/ingest",
     { source: "postgres", product_count: 80, days: 180 },
-    "Ingesta terminada. Si RELATIONAL_DB_URL no está configurada, se usaron datos demo para no bloquear la prueba."
+    "Ingesta terminada. Si RELATIONAL_DB_URL no está configurada, se usaron datos de prueba para no bloquear la validación local."
   );
 });
 
