@@ -1,6 +1,6 @@
 # Modelo predictivo inicial
 
-Este primer modelo no busca ser avanzado. El objetivo es demostrar que los datos se pueden traer, limpiar, guardar en MongoDB y usar para una predicción útil.
+Este primer modelo no busca ser avanzado. El objetivo es entregar una predicción útil, explicable y mantenible con los datos disponibles del inventario de FarmaExpres.
 
 ## Enfoque
 
@@ -34,5 +34,5 @@ Esta métrica es básica, pero sirve para explicar si el modelo está cerca o le
 - Separar ventas reales de ajustes de inventario.
 - Agregar estacionalidad por día de semana.
 - Usar regresión lineal o scikit-learn cuando existan más datos reales.
-- Guardar versiónes del modelo.
+- Guardar versiones del modelo.
 - Programar entrenamiento automático.

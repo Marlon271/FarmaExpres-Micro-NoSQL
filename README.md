@@ -1,142 +1,155 @@
-# FarmaExpres Micro NoSQL
+# FarmaExpres Prediction Service
 
-Microservicio independiente para analítica predictiva de inventario en FarmaExpres. No reemplaza el backend principal ni modifica sus servicios; toma datos de inventario, los almacena en MongoDB, los limpia y genera una predicción inicial para apoyar decisiones de reposición.
+Microservicio de analítica predictiva para FarmaExpres. Usa **Python + FastAPI** y **MongoDB** para extraer información de inventario desde `inventory-service`, limpiar datos, guardar evidencia analítica y calcular una predicción inicial de demanda y riesgo de agotamiento.
 
-El desarrollo se trabaja en `Develop`, con ramas `QA` y `main` para mantener el mismo orden usado en los repos de backend y frontend.
+Este repositorio sigue siendo independiente, pero ya no se plantea como una demostración aislada. Su integración oficial es por el ecosistema de FarmaExpres:
 
-## Qué hace este módulo
+```text
+Frontend React -> API Gateway -> prediction-service -> inventory-service -> PostgreSQL
+                                               |
+                                               v
+                                            MongoDB
+```
 
-1. Carga datos crudos desde datos simulados o desde PostgreSQL local de `FarmaExpres_Backend`.
-2. Guarda esos datos en MongoDB en la colección `raw_data`.
-3. Limpia y normaliza campos importantes: nombres, fechas, cantidades, stock, duplicados y registros incompletos.
-4. Guarda el resultado en `cleaned_data`.
-5. Calcula demanda esperada por medicamento para los próximos 7 días usando promedio móvil de salidas históricas.
-6. Marca riesgo de agotamiento según stock actual, stock mínimo y demanda proyectada.
-7. Muestra estado, mensajes del proceso, métricas, tabla y gráfica en un frontend pequeño.
+## Qué hace
 
-Importante: como el backend actual no tiene tabla formal de ventas u órdenes, el modelo usa `motion.type = 'Exit'` como aproximación de demanda. Esto queda documentado para no presentar los resultados como ventas reales.
+1. Recibe una solicitud desde el frontend principal por `/api/predictions`.
+2. El `api-gateway` enruta la solicitud hacia `prediction-service`.
+3. `prediction-service` valida JWT y roles.
+4. Para sincronizar datos, consulta `inventory-service` por HTTP interno.
+5. Guarda datos crudos en MongoDB (`raw_data` y `products_snapshot`).
+6. Limpia duplicados, fechas, nombres, cantidades inválidas y registros incompletos.
+7. Guarda datos limpios en `cleaned_data`.
+8. Calcula demanda esperada a 7 días con promedio móvil de 30 días.
+9. Guarda resultados en `predictions` y métricas en `model_metrics`.
+10. El frontend principal muestra estado, métricas, prioridad de reposición y tabla de predicciones.
 
 ## Stack
 
-- Backend: Python + FastAPI.
-- Base NoSQL: MongoDB.
-- Modelo predictivo: promedio móvil de 30 días sobre salidas de inventario.
-- Frontend: HTML, CSS y JavaScript estático servido con Nginx.
-- Ejecución local: Docker Compose.
+- Backend analítico: Python 3.12 + FastAPI.
+- Base NoSQL: MongoDB 7.
+- Fuente operativa: `inventory-service` del backend FarmaExpres.
+- Gateway: Spring Cloud Gateway del backend principal.
+- Frontend oficial: React + Vite en `FarmaExpres-Frontend`.
+- Frontend local auxiliar: HTML/CSS/JS estático para pruebas rápidas.
+- Modelo: promedio móvil de 30 días sobre movimientos `Exit`.
 
-## Estructura
+## Colecciones MongoDB
 
-```text
-backend/      API, ingesta, limpieza, MongoDB y predicción.
-frontend/     Tablero simple para estado, métricas, alertas y predicciones.
-scripts/      Generación de datos y pipeline local.
-docs/         Historias, arquitectura, endpoints, modelo, libro NoSQL, ABP e integración.
-docker-compose.yml
-.env.dev.example   Plantilla del entorno local dev.
-.env.qa.example    Plantilla del entorno local qa.
-.env.main.example  Plantilla del entorno local main.
-```
+| Colección | Uso |
+| --- | --- |
+| `raw_data` | Datos crudos recibidos desde `inventory-service` o fuentes locales de prueba. |
+| `products_snapshot` | Foto de medicamentos con stock, mínimo, categoría y vencimiento. |
+| `cleaned_data` | Datos normalizados y validados para el modelo. |
+| `predictions` | Demanda esperada, riesgo y días estimados hasta agotamiento. |
+| `model_metrics` | Métricas de limpieza, entrenamiento y error aproximado. |
 
-## Ejecutar con Docker por entorno
+## Ejecución integrada en desarrollo
 
-Primero crea el archivo local de entorno que vayas a usar:
-
-```bash
-cp .env.dev.example .env.dev
-```
-
-Si vas a leer PostgreSQL de `FarmaExpres_Backend`, llena `RELATIONAL_DB_URL` siguiendo el ejemplo comentado en la plantilla y cambia `CHANGE_ME` por la clave local de PostgreSQL. Si solo vas a usar datos simulados, deja `RELATIONAL_DB_URL` vacío.
-
-Dev:
-
-```bash
-docker compose --env-file .env.dev up -d --build
-```
-
-QA:
-
-```bash
-docker compose --env-file .env.qa up -d --build
-```
-
-Main local:
-
-```bash
-docker compose --env-file .env.main up -d --build
-```
-
-En este equipo, si `docker` no aparece en el PATH:
-
-```bash
-/Applications/Docker.app/Contents/Resources/bin/docker compose --env-file .env.dev up -d --build
-```
-
-Puertos por defecto en dev:
-
-- Backend: `http://localhost:8000`
-- Frontend: `http://localhost:5174`
-- MongoDB: `mongodb://localhost:27017`
-
-## Probar el flujo
-
-```bash
-curl http://localhost:8000/health
-curl -X POST http://localhost:8000/seed-test-data -H "Content-Type: application/json" -d '{"source":"generated","product_count":80,"days":180}'
-curl -X POST http://localhost:8000/clean
-curl -X POST http://localhost:8000/train -H "Content-Type: application/json" -d '{"horizon_days":7}'
-curl http://localhost:8000/predictions
-```
-
-También se puede ejecutar:
-
-```bash
-python3 scripts/run_local_pipeline.py --api http://localhost:8000
-```
-
-## Integración local con FarmaExpres_Backend
-
-El backend principal se levanta así:
+Primero levanta el backend principal:
 
 ```bash
 cd ../FarmaExpres_Backend
 docker compose --env-file .env.dev up -d --build
 ```
 
-En `dev`, PostgreSQL queda publicado en `localhost:5433`. Este microservicio trae una plantilla `.env.dev.example`; el archivo real `.env.dev` se crea localmente y no se sube al repositorio:
-
-```text
-RELATIONAL_DB_URL=postgresql://postgres:CHANGE_ME@host.docker.internal:5433/farmaexpres_inventory
-```
-
-Luego, desde este repo:
+Luego levanta este microservicio:
 
 ```bash
+cd ../FarmaExpres-Micro-NoSQL
+cp .env.dev.example .env.dev
 docker compose --env-file .env.dev up -d --build
-curl -X POST http://localhost:8000/ingest -H "Content-Type: application/json" -d '{"source":"postgres"}'
-curl -X POST http://localhost:8000/clean
-curl -X POST http://localhost:8000/train
 ```
 
-El backend principal no se modifica. Los scripts de prueba quedan en este repositorio.
+Puertos por defecto en `dev`:
+
+- Gateway oficial: `http://localhost:8080`
+- Prediction service directo: `http://localhost:8085`
+- Frontend auxiliar: `http://localhost:5174`
+- MongoDB: `mongodb://localhost:27017`
+
+La red `BACKEND_NETWORK=farmaexpres-dev_default` permite que `api-gateway` encuentre el contenedor `prediction-service`.
+
+## Endpoints oficiales por gateway
+
+Todos los endpoints de negocio se consumen por:
+
+```text
+http://localhost:8080/api/predictions
+```
+
+| Método | Ruta | Rol | Descripción |
+| --- | --- | --- | --- |
+| `GET` | `/api/predictions/health` | público | Revisa estado del microservicio y MongoDB. |
+| `POST` | `/api/predictions/ingest` | ADMIN, AUDITOR | Extrae snapshot desde `inventory-service`. |
+| `POST` | `/api/predictions/clean` | ADMIN, AUDITOR | Limpia datos crudos en MongoDB. |
+| `POST` | `/api/predictions/train` | ADMIN, AUDITOR | Recalcula predicciones. |
+| `POST` | `/api/predictions/recalculate` | ADMIN, AUDITOR | Limpia y entrena usando los datos ya cargados. |
+| `GET` | `/api/predictions` | ADMIN, AUDITOR, FARMACEUTICO | Lista predicciones. |
+| `GET` | `/api/predictions/{productId}` | ADMIN, AUDITOR, FARMACEUTICO | Consulta un medicamento. |
+| `GET` | `/api/predictions/metrics` | ADMIN, AUDITOR, FARMACEUTICO | Muestra métricas del modelo. |
+
+## Flujo de prueba con token
+
+1. Inicia sesión en el backend:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"temenico5@gmail.com","password":"admin123"}'
+```
+
+2. Usa el token recibido:
+
+```bash
+TOKEN="PEGAR_TOKEN_AQUI"
+
+curl -X POST http://localhost:8080/api/predictions/ingest \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"source":"inventory"}'
+
+curl -X POST http://localhost:8080/api/predictions/clean \
+  -H "Authorization: Bearer $TOKEN"
+
+curl -X POST http://localhost:8080/api/predictions/train \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"horizon_days":7}'
+
+curl http://localhost:8080/api/predictions \
+  -H "Authorization: Bearer $TOKEN"
+```
 
 ## Datos de prueba
 
-El endpoint `POST /seed-test-data` genera por defecto 80 medicamentos y 180 días de movimientos. También se puede generar SQL para la base relacional local:
+Los datos artificiales siguen existiendo para desarrollo local y validación técnica. No representan producción.
 
 ```bash
-python3 scripts/generate_relational_test_data.py --products 100 --days 180
+curl -X POST http://localhost:8085/seed-test-data \
+  -H "Content-Type: application/json" \
+  -d '{"source":"generated","product_count":80,"days":180}'
 ```
 
-Esos datos son artificiales y solo sirven para validar limpieza, carga NoSQL y predicción.
+`RELATIONAL_DB_URL` queda como fallback local para análisis técnico, pero la integración oficial del ecosistema usa `inventory-service`.
 
 ## Documentación
 
 - [Historias de usuario](docs/HISTORIAS_USUARIO.md)
 - [Libro de la base NoSQL](docs/LIBRO_BASE_NOSQL.md)
-- [ABP y alcance del proyecto](docs/ABP_ALCANCE.md)
-- [Arquitectura y análisis del repo principal](docs/ARQUITECTURA.md)
+- [Informe HTML para sustentación](docs/INFORME_PREDICCIONES_NOSQL.html)
+- [ABP y alcance](docs/ABP_ALCANCE.md)
+- [Arquitectura](docs/ARQUITECTURA.md)
 - [Endpoints](docs/ENDPOINTS.md)
 - [Modelo predictivo](docs/MODELO_PREDICTIVO.md)
 - [Integración local](docs/INTEGRACION_LOCAL.md)
-- [MoSCoW y alcance](docs/MOSCOW.md)
+- [MoSCoW](docs/MOSCOW.md)
 - [Trazabilidad](docs/TRAZABILIDAD.md)
+
+## Pruebas locales
+
+Validación rápida del núcleo de limpieza y predicción:
+
+```bash
+PYTHONPATH=backend python3 -m unittest discover backend/tests
+```

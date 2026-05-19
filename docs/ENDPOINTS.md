@@ -1,50 +1,55 @@
 # Endpoints
 
-Base local: `http://localhost:8000`
+La integración oficial se consume por el gateway del backend principal:
 
-## GET /health
+```text
+http://localhost:8080/api/predictions
+```
 
-Valida si el backend y MongoDB responden. También devuelve conteos por colección.
+El puerto directo del microservicio (`http://localhost:8085`) queda para diagnóstico local.
 
-## POST /seed-test-data
+## GET /api/predictions/health
 
-Carga datos simulados directamente en MongoDB.
+Valida si FastAPI y MongoDB responden. Devuelve conteos por colección y estado del flujo.
 
-Ejemplo:
+## POST /api/predictions/ingest
+
+Extrae datos desde `inventory-service` usando el token JWT recibido desde el frontend.
+
+Body recomendado:
 
 ```json
 {
-  "source": "generated",
-  "product_count": 15,
-  "days": 120
+  "source": "inventory"
 }
 ```
 
-## POST /ingest
+Roles permitidos:
 
-Carga datos desde una fuente.
+- `ADMIN`
+- `AUDITOR`
 
-Fuentes:
+## POST /api/predictions/clean
 
-- `generated`: datos simulados.
-- `postgres`: lee `product`, `batch` y `motion` desde PostgreSQL usando `RELATIONAL_DB_URL`.
-
-## POST /clean
-
-Limpia datos en `raw_data` y guarda resultados en `cleaned_data`.
+Limpia datos en `raw_data` y guarda el resultado en `cleaned_data`.
 
 Reglas aplicadas:
 
-- Eliminar duplicados.
-- Validar campos nulos.
-- Normalizar nombres.
-- Convertir fechas.
-- Rechazar cantidades negativas.
-- Marcar registros incompletos.
+- eliminar duplicados;
+- validar campos nulos;
+- normalizar nombres;
+- convertir fechas;
+- detectar cantidades negativas;
+- marcar registros incompletos.
 
-## POST /train
+Roles permitidos:
 
-Recalcula predicciones.
+- `ADMIN`
+- `AUDITOR`
+
+## POST /api/predictions/train
+
+Recalcula predicciones con promedio móvil.
 
 Ejemplo:
 
@@ -54,15 +59,35 @@ Ejemplo:
 }
 ```
 
-## GET /predictions
+Roles permitidos:
 
-Lista predicciones ordenadas por demanda esperada.
+- `ADMIN`
+- `AUDITOR`
 
-## GET /predictions/{productId}
+## POST /api/predictions/recalculate
 
-Consulta una predicción específica por `product_id`.
+Ejecuta limpieza y entrenamiento sobre los datos que ya están cargados en MongoDB.
 
-## GET /metrics
+Roles permitidos:
+
+- `ADMIN`
+- `AUDITOR`
+
+## GET /api/predictions
+
+Lista predicciones ordenadas por demanda esperada y riesgo.
+
+Roles permitidos:
+
+- `ADMIN`
+- `AUDITOR`
+- `FARMACEUTICO`
+
+## GET /api/predictions/{productId}
+
+Consulta la predicción de un medicamento específico por `product_id`.
+
+## GET /api/predictions/metrics
 
 Muestra métricas de limpieza y entrenamiento.
 
@@ -72,4 +97,18 @@ Campos principales:
 - `latest_cleaning`: última ejecución de limpieza.
 - `latest_training`: último entrenamiento.
 - `total_metrics`: cantidad de métricas guardadas.
-- `model_explanation`: resumen del uso del modelo.
+- `model_explanation`: explicación corta del modelo.
+
+## Endpoints locales de apoyo
+
+Estos endpoints existen para desarrollo directo contra `prediction-service`:
+
+- `GET /health`
+- `POST /seed-test-data`
+- `POST /ingest`
+- `POST /clean`
+- `POST /train`
+- `GET /predictions`
+- `GET /metrics`
+
+`POST /seed-test-data` solo debe usarse para pruebas técnicas; no representa datos reales.

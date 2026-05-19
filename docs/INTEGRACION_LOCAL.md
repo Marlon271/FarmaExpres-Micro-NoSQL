@@ -2,37 +2,35 @@
 
 ## Objetivo
 
-Probar este microservicio sin tocar el backend principal. El backend principal solo se usa como fuente de datos relacional local.
+Ejecutar `prediction-service` como parte del ecosistema FarmaExpres, consumiendo datos desde `inventory-service` y exponiendo resultados por el `api-gateway`.
 
-## Pasos
+## Flujo oficial
 
-1. Entrar al backend principal:
+```mermaid
+flowchart LR
+    A["Frontend React"] --> B["API Gateway"]
+    B --> C["prediction-service"]
+    C --> D["inventory-service"]
+    D --> E["PostgreSQL inventory"]
+    C --> F["MongoDB predictions"]
+```
+
+MongoDB no consulta PostgreSQL directamente. La extracción la hace Python por HTTP interno hacia `inventory-service`.
+
+## 1. Levantar backend principal
 
 ```bash
 cd ../FarmaExpres_Backend
-```
-
-2. Levantar servicios:
-
-```bash
 docker compose --env-file .env.dev up -d --build
 ```
 
-Si `docker` no está en el PATH:
+Servicios esperados:
 
-```bash
-/Applications/Docker.app/Contents/Resources/bin/docker compose --env-file .env.dev up -d --build
-```
+- `api-gateway`: `http://localhost:8080`
+- `inventory-service`: interno `http://inventory-service:8082`
+- PostgreSQL: `localhost:5433`
 
-3. Confirmar PostgreSQL:
-
-```bash
-docker compose ps
-```
-
-PostgreSQL debe quedar disponible en `localhost:5433`.
-
-4. Volver a este repo y levantar el microservicio:
+## 2. Levantar prediction-service
 
 ```bash
 cd ../FarmaExpres-Micro-NoSQL
@@ -40,30 +38,68 @@ cp .env.dev.example .env.dev
 docker compose --env-file .env.dev up -d --build
 ```
 
-Antes de usar la ingesta desde PostgreSQL, reemplazar `CHANGE_ME` en `.env.dev` por la clave local de PostgreSQL. Si solo se van a probar datos simulados, `RELATIONAL_DB_URL` puede quedar vacío.
+La variable clave es:
 
-5. Ingestar desde PostgreSQL:
-
-```bash
-curl -X POST http://localhost:8000/ingest -H "Content-Type: application/json" -d '{"source":"postgres"}'
-curl -X POST http://localhost:8000/clean
-curl -X POST http://localhost:8000/train
+```text
+BACKEND_NETWORK=farmaexpres-dev_default
 ```
 
-6. Abrir frontend:
+Con esa red, el gateway del backend puede resolver:
+
+```text
+http://prediction-service:8000
+```
+
+## 3. Probar por gateway
+
+Primero obtener token:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"temenico5@gmail.com","password":"admin123"}'
+```
+
+Luego ejecutar:
+
+```bash
+TOKEN="PEGAR_TOKEN_AQUI"
+
+curl http://localhost:8080/api/predictions/health
+
+curl -X POST http://localhost:8080/api/predictions/ingest \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"source":"inventory"}'
+
+curl -X POST http://localhost:8080/api/predictions/clean \
+  -H "Authorization: Bearer $TOKEN"
+
+curl -X POST http://localhost:8080/api/predictions/train \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"horizon_days":7}'
+
+curl http://localhost:8080/api/predictions \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+## 4. Frontend principal
+
+El frontend integrado consume el gateway con rutas relativas:
+
+```text
+/api/predictions
+```
+
+El módulo visual queda dentro de `FarmaExpres-Frontend`, no como una aplicación separada para usuarios finales.
+
+## 5. Herramientas locales de apoyo
+
+El frontend estático de este repositorio se conserva como tablero auxiliar de diagnóstico:
 
 ```text
 http://localhost:5174
 ```
 
-## Datos de prueba relacionales
-
-Para crear muchos movimientos de inventario en PostgreSQL local:
-
-```bash
-python3 scripts/generate_relational_test_data.py --products 100 --days 180
-```
-
-Luego ejecutar el SQL generado contra `farmaexpres_inventory`.
-
-Importante: estos datos son simulados y no se deben tratar como producción.
+Los datos generados por `POST /seed-test-data` y el fallback `RELATIONAL_DB_URL` son solo para pruebas técnicas. La integración oficial usa `inventory-service`.

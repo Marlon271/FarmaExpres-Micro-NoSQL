@@ -6,7 +6,7 @@ Se clonó `https://github.com/FarmaExpres/FarmaExpres.git` como referencia gener
 
 La referencia técnica local que sí contiene backend, Docker, Liquibase y tablas es `../FarmaExpres_Backend`.
 
-También se revisaron ramas remotas de backend y frontend. Ambos usan `Develop`, `QA` y `main`, por eso este repositorio nuevo se dejó trabajando en `Develop`.
+También se revisaron ramas remotas de backend y frontend. Ambos usan ramas de historia, `Develop`, `QA` y `main`; por eso este trabajo se organizó sobre `HU-MDRT-001` antes de promover a ramas compartidas.
 
 ## Cómo corre el backend principal
 
@@ -32,7 +32,9 @@ Servicios principales:
 - `auth-service`: Spring Boot en `8081`.
 - `inventory-service`: Spring Boot en `8082`.
 - `alert-service`: Node/Express en `8083`.
+- `audit-service`: Spring Boot en `8084`.
 - `api-gateway`: Spring Boot en `8080`.
+- `prediction-service`: FastAPI en `8000` interno, ejecutado desde este repositorio y conectado a la red Docker del backend.
 
 ## Dónde está el backend
 
@@ -41,6 +43,7 @@ En `FarmaExpres_Backend`:
 - `auth-service/`
 - `inventory-service/`
 - `alert-service/`
+- `audit-service/`
 - `api-gateway/`
 
 ## Dónde está Liquibase
@@ -49,12 +52,13 @@ Liquibase está versionado en:
 
 - `database/auth/changelog-master.yaml`
 - `database/inventory/changelog-master.yaml`
+- `database/audit/changelog-master.yaml`
 - `database/auth/01_ddl`
 - `database/auth/02_dml`
 - `database/inventory/01_ddl`
 - `database/inventory/02_dml`
 
-Docker Compose monta `./database` y ejecuta los contenedores `liquibase-auth` y `liquibase-inventory` antes de levantar los servicios.
+Docker Compose monta `./database` y ejecuta los contenedores `liquibase-auth`, `liquibase-inventory` y `liquibase-audit` antes de levantar los servicios.
 
 ## Tablas relacionales útiles
 
@@ -84,13 +88,15 @@ No se encontró una tabla específica de ventas u órdenes en la estructura actu
 
 Con esos campos se puede estimar demanda por promedio móvil, productos con mayor salida y riesgo de agotamiento. No se afirma que sean ventas reales porque la tabla disponible es de movimientos de inventario.
 
-## Arquitectura del nuevo microservicio
+## Arquitectura integrada del servicio predictivo
 
 ```text
-Frontend estático
-  -> FastAPI backend
-      -> MongoDB
-      -> PostgreSQL FarmaExpres solo en modo pruebas locales
+Frontend React
+  -> api-gateway
+      -> prediction-service
+          -> inventory-service
+              -> PostgreSQL
+          -> MongoDB
 ```
 
 Colecciones MongoDB:
@@ -101,4 +107,4 @@ Colecciones MongoDB:
 - `model_metrics`: métricas de limpieza y entrenamiento.
 - `products_snapshot`: copia de productos relevante para el análisis.
 
-El microservicio no modifica el backend principal. Solo lee datos si se configura la conexión relacional.
+El microservicio no modifica tablas relacionales. La extracción oficial se realiza por `inventory-service`; la conexión directa por `RELATIONAL_DB_URL` queda como fallback local de diagnóstico.

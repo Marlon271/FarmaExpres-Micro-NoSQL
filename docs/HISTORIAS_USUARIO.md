@@ -11,3 +11,6 @@ Las historias se separan por archivo para que sea fácil revisarlas, presentarla
 | HU-05 | Generar predicciones | [HU-05-generar-predicciones.md](historias/HU-05-generar-predicciones.md) |
 | HU-06 | Visualizar predicciones | [HU-06-visualizar-predicciones.md](historias/HU-06-visualizar-predicciones.md) |
 | HU-07 | Consultar métricas del modelo | [HU-07-consultar-metricas.md](historias/HU-07-consultar-metricas.md) |
+| HU-MDRT-001 | Integrar prediction-service al gateway | [HU-MDRT-001-integracion-gateway.md](historias/HU-MDRT-001-integracion-gateway.md) |
+| HU-MDRT-002 | Sincronizar datos desde inventory-service | [HU-MDRT-002-ingesta-inventory-service.md](historias/HU-MDRT-002-ingesta-inventory-service.md) |
+| HU-MDRT-003 | Visualizar predicciones en el portal principal | [HU-MDRT-003-frontend-predictivo.md](historias/HU-MDRT-003-frontend-predictivo.md) |

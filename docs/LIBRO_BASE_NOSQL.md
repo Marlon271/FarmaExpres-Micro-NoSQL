@@ -1,20 +1,20 @@
 # Libro de la base de datos no relacional
 
-Este documento explica, en lenguaje sencillo, cómo el microservicio usa MongoDB para apoyar el análisis predictivo de FarmaExpres. La idea no es reemplazar PostgreSQL ni el backend principal, sino crear una capa NoSQL donde se puedan guardar datos procesados, limpiar información y calcular una primera predicción de demanda.
+Este documento explica, en lenguaje sencillo, cómo `prediction-service` usa MongoDB para apoyar el análisis predictivo de FarmaExpres. La idea no es reemplazar PostgreSQL ni el backend principal, sino agregar una capa NoSQL donde se puedan guardar datos procesados, limpiar información y calcular una primera predicción de demanda.
 
 ## 1. Punto de partida
 
 FarmaExpres ya tiene una base relacional en PostgreSQL. Esa base es buena para el funcionamiento diario del sistema porque guarda productos, lotes, movimientos y usuarios con reglas claras.
 
-Para el corte de base de datos no relacional se necesitaba algo distinto:
+Para el componente de base de datos no relacional se necesitaba algo distinto:
 
 - guardar datos crudos sin cambiar el modelo relacional;
 - transformar esos datos sin tocar el backend principal;
 - almacenar datos limpios para análisis;
 - guardar predicciones y métricas del modelo;
-- permitir pruebas con muchos datos simulados.
+- permitir pruebas con muchos datos simulados cuando el entorno local lo requiera.
 
-Por eso se creó este microservicio independiente con MongoDB.
+Por eso se creó este microservicio con MongoDB y se integró al ecosistema por medio del `api-gateway`.
 
 ## 2. Qué datos se toman de la base relacional
 
@@ -30,32 +30,38 @@ No se encontró una tabla formal de ventas u órdenes. Por eso el modelo no afir
 
 ## 3. Cómo se comunica PostgreSQL con MongoDB
 
-La comunicación ocurre desde el backend del microservicio. MongoDB no se conecta por sí solo a PostgreSQL; quien hace el puente es la API en FastAPI.
+MongoDB no se conecta por sí solo a PostgreSQL. La comunicación ocurre por servicios:
+
+- PostgreSQL pertenece al backend operativo.
+- `inventory-service` es dueño de los datos de inventario.
+- `prediction-service` pide un snapshot a `inventory-service`.
+- FastAPI transforma ese snapshot en documentos JSON.
+- MongoDB guarda las etapas analíticas.
 
 El proceso es:
 
-1. El usuario ejecuta `POST /ingest`.
-2. FastAPI revisa si existe `RELATIONAL_DB_URL`.
-3. Si existe, se conecta a PostgreSQL.
-4. Ejecuta consultas sobre `product`, `batch` y `motion`.
-5. Convierte cada fila relacional en documentos tipo JSON.
-6. Guarda los documentos en MongoDB.
-7. Limpia colecciones derivadas para no mezclar predicciones viejas con datos nuevos.
+1. El usuario entra al módulo de predicciones en el frontend.
+2. El frontend llama al `api-gateway` por `/api/predictions`.
+3. El gateway enruta hacia `prediction-service`.
+4. `prediction-service` valida el JWT y el rol.
+5. FastAPI consulta `GET /api/inventory/analytics/snapshot` en `inventory-service`.
+6. `inventory-service` lee PostgreSQL y responde con productos, lotes y movimientos.
+7. FastAPI convierte esa respuesta en documentos para MongoDB.
+8. MongoDB guarda datos crudos y foto de productos.
+9. El proceso de limpieza y predicción trabaja sobre esas colecciones.
 
 ```mermaid
 flowchart TD
-    A["Usuario pulsa Ingestar PostgreSQL"] --> B["FastAPI recibe POST /ingest"]
-    B --> C{"RELATIONAL_DB_URL configurada?"}
-    C -- "Sí" --> D["Conectar a PostgreSQL"]
-    C -- "No" --> E["Generar datos demo"]
-    D --> F["Consultar product, batch y motion"]
-    F --> G["Convertir filas SQL a documentos JSON"]
-    E --> G
-    G --> H["Guardar en MongoDB raw_data"]
-    G --> I["Guardar productos en products_snapshot"]
-    H --> J["Vaciar cleaned_data y predictions anteriores"]
-    I --> K["Datos listos para limpieza"]
-    J --> K
+    A["Frontend: sincronizar inventario"] --> B["API Gateway /api/predictions/ingest"]
+    B --> C["prediction-service valida JWT y rol"]
+    C --> D["GET inventory-service /api/inventory/analytics/snapshot"]
+    D --> E["inventory-service lee PostgreSQL"]
+    E --> F["Devuelve productos, lotes y movimientos"]
+    F --> G["FastAPI convierte a documentos JSON"]
+    G --> H["MongoDB raw_data"]
+    G --> I["MongoDB products_snapshot"]
+    H --> J["Datos listos para limpieza"]
+    I --> J
 ```
 
 ## 4. Modelado NoSQL usado
@@ -74,7 +80,7 @@ Ejemplo simple de documento en `raw_data`:
 
 ```json
 {
-  "source": "postgres",
+  "source": "inventory-service",
   "product_id": "12",
   "product_code": "FXT-0012",
   "product_name": "Acetaminofén 500 mg",
@@ -202,19 +208,21 @@ MongoDB no "entrena" el modelo por sí mismo. Su papel es almacenar y organizar 
 En otras palabras:
 
 - PostgreSQL es la fuente operativa original.
+- `inventory-service` expone un contrato estable para analítica.
 - FastAPI extrae, transforma y calcula.
 - MongoDB guarda el historial analítico: crudo, limpio, predicción y métricas.
-- El frontend consulta la API para mostrar los resultados.
+- El frontend consulta el gateway para mostrar los resultados.
 
 ```mermaid
 flowchart LR
-    A["PostgreSQL operativo"] --> B["FastAPI: extracción"]
-    B --> C["MongoDB: raw_data"]
-    C --> D["FastAPI: limpieza"]
-    D --> E["MongoDB: cleaned_data"]
-    E --> F["FastAPI: promedio móvil"]
-    F --> G["MongoDB: predictions + model_metrics"]
-    G --> H["Frontend: tablero"]
+    A["PostgreSQL operativo"] --> B["inventory-service"]
+    B --> C["prediction-service: extracción HTTP"]
+    C --> D["MongoDB: raw_data"]
+    D --> E["prediction-service: limpieza"]
+    E --> F["MongoDB: cleaned_data"]
+    F --> G["prediction-service: promedio móvil"]
+    G --> H["MongoDB: predictions + model_metrics"]
+    H --> I["Frontend: módulo Predicciones"]
 ```
 
 ## 8. Por qué se tomaron esos datos
@@ -261,10 +269,10 @@ Una forma fácil de explicarlo:
 
 | Parte | Archivo |
 | --- | --- |
-| Conexión y carga desde PostgreSQL | `backend/app/services/ingestion.py` |
+| Carga desde `inventory-service` | `backend/app/services/inventory_client.py`, `backend/app/services/ingestion.py` |
+| Fallback local desde PostgreSQL | `backend/app/services/ingestion.py` |
 | Limpieza de datos | `backend/app/services/cleaning.py` |
 | Modelo predictivo | `backend/app/services/prediction.py` |
 | Endpoints | `backend/app/main.py` |
 | Configuración MongoDB | `backend/app/database.py` |
 | Frontend de resultados | `frontend/index.html`, `frontend/app.js`, `frontend/styles.css` |
-
