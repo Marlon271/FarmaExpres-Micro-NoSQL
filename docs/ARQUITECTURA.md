@@ -6,7 +6,7 @@ Se clonó `https://github.com/FarmaExpres/FarmaExpres.git` como referencia gener
 
 La referencia técnica local que sí contiene backend, Docker, Liquibase y tablas es `../FarmaExpres_Backend`.
 
-También se revisaron ramas remotas de backend y frontend. Ambos usan ramas de historia, `Develop`, `QA` y `main`; por eso este trabajo se organizó sobre `HU-MDRT-001` antes de promover a ramas compartidas.
+También se revisaron ramas remotas de backend y frontend. Ambos usan ramas de historia, `Develop`, `QA` y `main`; por eso este trabajo se organiza desde `HU-MDRT-002-dev` para la integración del servicio predictivo y `HU-MDRT-003-dev` para la visualización en el portal.
 
 ## Cómo corre el backend principal
 

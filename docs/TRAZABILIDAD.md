@@ -47,9 +47,8 @@ La integración oficial ya no consulta tablas relacionales de forma directa. Pos
 | HU-05 Generar predicciones | Modelo de promedio móvil | Completa |
 | HU-06 Visualizar predicciones | Frontend principal con módulo predictivo | Integrada |
 | HU-07 Consultar métricas | Endpoint `/api/predictions/metrics` y métricas en UI | Integrada |
-| HU-MDRT-001 | Gateway y rutas oficiales `/api/predictions` | Completa localmente; pendiente de despliegue Docker completo y push autorizado |
-| HU-MDRT-002 | Ingesta por `inventory-service` | Completa localmente; pendiente de prueba integrada con contenedores activos |
-| HU-MDRT-003 | Módulo visual en frontend principal | Completa localmente; validada con lint y build |
+| HU-MDRT-002 | Servicio predictivo NoSQL, gateway, MongoDB e ingesta por `inventory-service` | Validada localmente con Docker, MongoDB y endpoints por gateway |
+| HU-MDRT-003 | Módulo visual en frontend principal | Validada localmente desde `localhost:3000/predictions` |
 
 ## Endpoints oficiales
 
@@ -63,6 +62,18 @@ La integración oficial ya no consulta tablas relacionales de forma directa. Pos
 | `GET /api/predictions` | Lista predicciones |
 | `GET /api/predictions/{productId}` | Consulta una predicción puntual |
 | `GET /api/predictions/metrics` | Muestra métricas de limpieza y entrenamiento |
+
+## Validación local integrada
+
+La validación más reciente se realizó con backend, frontend, MongoDB y `prediction-service` ejecutándose en Docker. Primero se registraron entradas y salidas por el flujo operativo de FarmaExpres; después se sincronizó inventario desde el módulo predictivo.
+
+Resultado observado:
+
+- `raw_data`: 130 documentos.
+- `cleaned_data`: 130 documentos.
+- `predictions`: 11 medicamentos evaluados.
+- `risk_high_count`: 10 medicamentos en riesgo alto.
+- `risk_out_of_stock_count`: 1 medicamento agotado.
 
 ## Decisiones técnicas
 
@@ -80,4 +91,4 @@ La integración oficial ya no consulta tablas relacionales de forma directa. Pos
 - El modelo no contempla estacionalidad avanzada ni eventos externos.
 - La generación de datos de prueba no debe usarse como información productiva.
 - El promedio móvil debe evolucionar cuando exista más historial real o una tabla formal de ventas.
-- El despliegue Docker completo debe repetirse antes del push final cuando la sesión permita usar Docker sin límite de aprobación.
+- El error medio del modelo requiere historial distribuido en varios días para ser más representativo.
