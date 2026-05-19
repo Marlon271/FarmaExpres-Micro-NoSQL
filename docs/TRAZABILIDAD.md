@@ -47,9 +47,9 @@ La integración oficial ya no consulta tablas relacionales de forma directa. Pos
 | HU-05 Generar predicciones | Modelo de promedio móvil | Completa |
 | HU-06 Visualizar predicciones | Frontend principal con módulo predictivo | Integrada |
 | HU-07 Consultar métricas | Endpoint `/api/predictions/metrics` y métricas en UI | Integrada |
-| HU-MDRT-001 | Gateway y rutas oficiales `/api/predictions` | En implementación |
-| HU-MDRT-002 | Ingesta por `inventory-service` | En implementación |
-| HU-MDRT-003 | Módulo visual en frontend principal | En implementación |
+| HU-MDRT-001 | Gateway y rutas oficiales `/api/predictions` | Completa localmente; pendiente de despliegue Docker completo y push autorizado |
+| HU-MDRT-002 | Ingesta por `inventory-service` | Completa localmente; pendiente de prueba integrada con contenedores activos |
+| HU-MDRT-003 | Módulo visual en frontend principal | Completa localmente; validada con lint y build |
 
 ## Endpoints oficiales
 
@@ -80,3 +80,4 @@ La integración oficial ya no consulta tablas relacionales de forma directa. Pos
 - El modelo no contempla estacionalidad avanzada ni eventos externos.
 - La generación de datos de prueba no debe usarse como información productiva.
 - El promedio móvil debe evolucionar cuando exista más historial real o una tabla formal de ventas.
+- El despliegue Docker completo debe repetirse antes del push final cuando la sesión permita usar Docker sin límite de aprobación.
