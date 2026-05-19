@@ -10,12 +10,12 @@ La base relacional útil para predicción está en `farmaexpres_inventory`. Las 
 
 ## Alcance
 
-- Leer PostgreSQL solo cuando `RELATIONAL_DB_URL` este configurada.
+- Leer PostgreSQL solo cuando `RELATIONAL_DB_URL` esté configurada como apoyo local.
 - Guardar los registros importados en `raw_data`.
 - Guardar productos actuales en `products_snapshot`.
 
 ## Criterios de aceptación
 
 - `POST /ingest` acepta `{"source":"postgres"}`.
-- Si PostgreSQL no está configurado, el endpoint no falla la demo y usa datos generados.
-- El backend principal no se modifica.
+- Si PostgreSQL no está configurado, el endpoint usa datos generados para no bloquear la validación local.
+- La integración oficial debe consumir `inventory-service`, no tablas relacionales directamente.

@@ -27,8 +27,10 @@ def parse_date(value: Any) -> Optional[str]:
         return value.isoformat()
     if isinstance(value, str):
         clean = value.strip()
+        clean = clean[:-1] + "+00:00" if clean.endswith("Z") else clean
+        clean = re.sub(r"(\.\d{6})\d+([+-]\d{2}:?\d{2})?$", r"\1\2", clean)
         try:
-            return datetime.fromisoformat(clean.replace("Z", "+00:00")).isoformat()
+            return datetime.fromisoformat(clean).isoformat()
         except ValueError:
             try:
                 return date.fromisoformat(clean[:10]).isoformat()
@@ -56,12 +58,13 @@ def _as_float(value: Any) -> float | None:
 
 
 def clean_records(raw_records: Iterable[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    records = list(raw_records)
     cleaned: List[Dict[str, Any]] = []
     seen = set()
     duplicates_removed = 0
     invalid_records = 0
 
-    for record in raw_records:
+    for record in records:
         amount = _as_int(record.get("amount", record.get("quantity")))
         stock = _as_int(record.get("stock", record.get("current_stock")))
         minimum_stock = _as_int(record.get("minimum_stock", record.get("minimumstock")))
@@ -135,7 +138,7 @@ def clean_records(raw_records: Iterable[Dict[str, Any]]) -> Tuple[List[Dict[str,
         )
 
     metrics = {
-        "input_records": len(list(raw_records)) if not isinstance(raw_records, list) else len(raw_records),
+        "input_records": len(records),
         "cleaned_records": len(cleaned),
         "valid_records": len([item for item in cleaned if item["is_valid"]]),
         "invalid_records": invalid_records,

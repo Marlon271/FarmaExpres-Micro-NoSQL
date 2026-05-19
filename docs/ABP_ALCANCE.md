@@ -4,70 +4,69 @@ Este documento resume el alcance del microservicio desde una mirada de Aprendiza
 
 ## Problema
 
-FarmaExpres tiene información operativa en una base relacional, pero para el nuevo corte se necesitaba demostrar uso de base de datos no relacional, limpieza de datos y predicción. El reto era hacerlo sin modificar el backend principal.
+FarmaExpres tiene información operativa en una base relacional, pero necesita una capa analítica para limpiar datos, preparar información histórica y generar predicciones iniciales de demanda. El reto es hacerlo sin romper la arquitectura de microservicios ni saltarse la propiedad de datos de `inventory-service`.
 
 ## Pregunta guía
 
-¿Cómo puede FarmaExpres usar una base no relacional para preparar datos de inventario y generar una predicción inicial de demanda sin afectar su sistema principal?
+¿Cómo puede FarmaExpres usar una base no relacional para preparar datos de inventario y generar una predicción inicial de demanda integrada al portal principal?
 
 ## Objetivo general
 
-Construir un microservicio independiente que use MongoDB para almacenar datos crudos, datos limpios, predicciones y métricas, permitiendo visualizar una estimación de demanda e inventario.
+Construir un microservicio analítico que use MongoDB para almacenar datos crudos, datos limpios, predicciones y métricas, consumiendo datos desde `inventory-service` y exponiendo resultados por el `api-gateway`.
 
 ## Objetivos específicos
 
 - Revisar la estructura del backend principal y sus datos relacionales.
-- Extraer o simular datos de productos, lotes y movimientos.
+- Extraer datos de productos, lotes y movimientos desde `inventory-service`.
 - Guardar esos datos en MongoDB.
 - Limpiar y validar los registros antes de usarlos.
 - Calcular una predicción inicial con un método simple y explicable.
-- Mostrar el resultado en un frontend pequeño.
+- Mostrar el resultado en el frontend principal de FarmaExpres.
 - Documentar el flujo para que pueda sustentarse de forma clara.
 
 ## Alcance de esta versión
 
 Sí incluye:
 
-- Docker Compose con MongoDB, backend y frontend.
-- API FastAPI con endpoints de ingesta, limpieza, entrenamiento, predicciones y métricas.
+- Docker Compose con MongoDB y `prediction-service`.
+- API FastAPI con endpoints oficiales bajo `/api/predictions`.
 - Colecciones MongoDB para cada etapa del dato.
 - Datos de prueba amplios.
 - Predicción por promedio móvil de 30 días.
-- Tablero visual para explicar el flujo y consultar resultados.
+- Módulo visual en el frontend principal.
 - Documentación técnica y pedagógica.
 
 No incluye:
 
-- Cambios en el backend principal.
-- Integración definitiva con el API Gateway.
-- Autenticación del microservicio.
 - Modelo avanzado de machine learning.
 - Uso de datos reales de producción.
+- Reemplazo de PostgreSQL como base operativa.
+- Lectura directa del esquema `inventory` como integración oficial.
 
 ## Metodología usada
 
 1. Revisión del backend principal para entender Docker, Liquibase y tablas.
 2. Identificación de tablas útiles para inventario.
 3. Diseño de colecciones NoSQL según el ciclo del dato.
-4. Implementación de ingesta desde PostgreSQL o datos generados.
+4. Implementación de ingesta desde `inventory-service`.
 5. Implementación de limpieza y banderas de calidad.
 6. Implementación de promedio móvil como modelo inicial.
-7. Construcción de frontend de validación.
+7. Integración visual en el frontend principal.
 8. Documentación de historias, alcance, endpoints y flujo NoSQL.
 
 ## Entregables
 
 | Entregable | Estado |
 | --- | --- |
-| Repositorio independiente | Completo |
+| Repositorio del microservicio | Completo |
 | Base MongoDB | Completo |
 | Backend predictivo | Completo |
-| Frontend de visualización | Completo |
+| Integración con gateway | En implementación |
+| Módulo en frontend principal | En implementación |
 | Datos de prueba | Completo |
 | Documentación ABP y NoSQL | Completo |
-| Integración definitiva con FarmaExpres | Pendiente |
+| Integración definitiva con FarmaExpres | En implementación |
 
 ## Conclusión
 
-El proyecto demuestra que FarmaExpres puede tener un módulo analítico separado del sistema principal. PostgreSQL sigue siendo la base operativa, mientras MongoDB se usa como base flexible para análisis, limpieza, predicción y visualización.
-
+El proyecto integra una capa analítica al ecosistema FarmaExpres. PostgreSQL sigue siendo la base operativa, `inventory-service` conserva la propiedad de los datos de inventario y MongoDB funciona como base flexible para análisis, limpieza, predicción y visualización.
