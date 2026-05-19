@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from pymongo.database import Database
 
@@ -27,6 +27,105 @@ def replace_generated_data(db: Database, product_count: int = 80, days: int = 18
         "raw_records_inserted": len(raw_records),
         "products_inserted": len(snapshots),
         "generated_at": datetime.now(timezone.utc),
+    }
+
+
+def ingest_from_inventory_snapshot(db: Database, snapshot: Dict[str, Any]) -> Dict[str, Any]:
+    products = snapshot.get("products") or []
+    batches = snapshot.get("batches") or []
+    movements = snapshot.get("movements") or []
+    generated_at = datetime.now(timezone.utc)
+
+    products_by_id = {str(product.get("productId")): product for product in products if product.get("productId")}
+    batches_by_id = {str(batch.get("batchId")): batch for batch in batches if batch.get("batchId")}
+
+    snapshots: List[Dict[str, Any]] = []
+    raw_records: List[Dict[str, Any]] = []
+
+    for product in products:
+        product_id = str(product.get("productId") or product.get("productCode") or "")
+        if not product_id:
+            continue
+        snapshots.append(
+            {
+                "source": "inventory-service",
+                "product_id": product_id,
+                "product_code": product.get("productCode", ""),
+                "product_name": product.get("productName", ""),
+                "generic_name": product.get("genericName", ""),
+                "category": product.get("category") or product.get("dosageForm") or "",
+                "current_stock": product.get("currentStock", 0),
+                "minimum_stock": product.get("minimumStock", 0),
+                "stock_maximo": product.get("maximumStock"),
+                "unit_price": product.get("unitPrice"),
+                "precio_venta": product.get("salePrice"),
+                "expiration_date": product.get("expirationDate"),
+                "active": product.get("active", True),
+                "generated_at": generated_at,
+            }
+        )
+
+    for movement in movements:
+        product_id = str(movement.get("productId") or "")
+        product = products_by_id.get(product_id, {})
+        batch = batches_by_id.get(str(movement.get("batchId") or ""), {})
+        raw_records.append(
+            {
+                "source": "inventory-service",
+                "product_id": product_id,
+                "product_code": movement.get("productCode") or product.get("productCode", ""),
+                "product_name": movement.get("productName") or product.get("productName", ""),
+                "category": product.get("category") or product.get("dosageForm") or "",
+                "movement_id": movement.get("movementId"),
+                "movement_type": movement.get("movementType", "Snapshot"),
+                "amount": movement.get("amount", 0),
+                "movement_date": movement.get("movementDate"),
+                "stock": movement.get("stock", product.get("currentStock", 0)),
+                "minimum_stock": movement.get("minimumStock", product.get("minimumStock", 0)),
+                "batch_id": movement.get("batchId"),
+                "batch_code": movement.get("batchCode") or batch.get("batchCode", ""),
+                "expiration_date": movement.get("expirationDate") or product.get("expirationDate"),
+                "batch_expiration_date": movement.get("batchExpirationDate") or batch.get("expirationDate"),
+                "user_id": movement.get("userId"),
+                "user_name": movement.get("userName", ""),
+                "user_email": movement.get("userEmail", ""),
+                "user_role": movement.get("userRole", ""),
+            }
+        )
+
+    if not raw_records:
+        raw_records = [
+            {
+                "source": "inventory-service",
+                "product_id": item["product_id"],
+                "product_code": item.get("product_code", ""),
+                "product_name": item.get("product_name", ""),
+                "category": item.get("category", ""),
+                "movement_type": "Snapshot",
+                "amount": 0,
+                "movement_date": generated_at,
+                "stock": item.get("current_stock", 0),
+                "minimum_stock": item.get("minimum_stock", 0),
+                "expiration_date": item.get("expiration_date"),
+            }
+            for item in snapshots
+        ]
+
+    db.raw_data.delete_many({"source": "inventory-service"})
+    db.products_snapshot.delete_many({"source": "inventory-service"})
+    _clear_derived_collections(db)
+    if raw_records:
+        db.raw_data.insert_many(raw_records)
+    if snapshots:
+        db.products_snapshot.insert_many(snapshots)
+
+    return {
+        "source": "inventory-service",
+        "raw_records_inserted": len(raw_records),
+        "products_inserted": len(snapshots),
+        "movements_received": len(movements),
+        "batches_received": len(batches),
+        "generated_at": generated_at,
     }
 
 
