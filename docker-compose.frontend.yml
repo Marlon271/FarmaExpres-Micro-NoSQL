@@ -1,8 +1,0 @@
-name: ${FRONTEND_COMPOSE_PROJECT_NAME:-farmaexpres-frontend-dev}
-
-services:
-  prediction-frontend:
-    build: ./frontend
-    ports:
-      - "${PREDICTION_FRONTEND_PORT:-5174}:80"
-    restart: unless-stopped

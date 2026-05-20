@@ -96,13 +96,12 @@ docker compose --env-file .env.dev up -d --build
 
 cd ../FarmaExpres-Micro-NoSQL
 docker compose --env-file .env.dev up -d --build
-docker compose --env-file .env.dev -f docker-compose.frontend.yml up -d --build
 
 cd ../FarmaExpres-Frontend/frontend
 docker compose --env-file .env.dev up -d --build
 ```
 
-Para `qa` o `main`, se cambia `.env.dev` por `.env.qa` o `.env.main` en los tres repositorios. Cada ambiente conserva su propia red Docker, puertos publicados y base MongoDB. Además, Docker Desktop queda organizado por capa: `mongo` y `prediction-service` dentro del grupo backend, y `prediction-frontend` dentro del grupo frontend.
+Para `qa` o `main`, se cambia `.env.dev` por `.env.qa` o `.env.main` en los tres repositorios. Cada ambiente conserva su propia red Docker, puertos publicados y base MongoDB. Además, Docker Desktop queda organizado por capa: `mongo` y `prediction-service` dentro del grupo backend, y el módulo visual se usa desde el frontend principal.
 
 ## Limitaciones conocidas
 

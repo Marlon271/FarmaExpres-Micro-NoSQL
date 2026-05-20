@@ -135,17 +135,4 @@ docker compose --env-file .env.main up -d --build
 
 ## 5. Herramientas locales de apoyo
 
-El frontend estático de este repositorio se conserva como tablero auxiliar de diagnóstico:
-
-```bash
-cd ../FarmaExpres-Micro-NoSQL
-docker compose --env-file .env.dev -f docker-compose.frontend.yml up -d --build
-```
-
-```text
-http://localhost:5174
-```
-
-Ese contenedor se llama `prediction-frontend` y aparece dentro del grupo `farmaexpres-frontend-dev`, junto con el `frontend` principal. Para `qa` y `main` se usan los mismos comandos cambiando el archivo `.env`.
-
 Los datos generados por `POST /seed-test-data` y el fallback `RELATIONAL_DB_URL` son solo para pruebas técnicas. La integración oficial usa `inventory-service`.

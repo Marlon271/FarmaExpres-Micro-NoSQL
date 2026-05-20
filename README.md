@@ -51,14 +51,12 @@ Cada ambiente se levanta con su archivo `.env` correspondiente. El orden recomen
 1. Backend principal.
 2. Backend predictivo NoSQL (`mongo` y `prediction-service`).
 3. Frontend principal.
-4. Frontend auxiliar de predicciones, solo si se quiere revisar el microservicio por separado.
 
-Docker Desktop agrupa los contenedores por nombre de proyecto. Por eso este repositorio se levanta en dos Compose:
+Docker Desktop agrupa los contenedores por nombre de proyecto. Por eso este repositorio usa el mismo grupo Docker del backend para que el servicio predictivo quede integrado al ecosistema principal:
 
 | Compose | Contenedores | Grupo esperado en Docker Desktop |
 | --- | --- | --- |
 | `docker-compose.yml` | `mongo`, `prediction-service` | `farmaexpres-dev`, `farmaexpres-qa` o `farmaexpres-main` |
-| `docker-compose.frontend.yml` | `prediction-frontend` | `farmaexpres-frontend-dev`, `farmaexpres-frontend-qa` o `farmaexpres-frontend-main` |
 
 Con esta organización, el ambiente de desarrollo se ve así:
 
@@ -75,7 +73,6 @@ farmaexpres-dev
 
 farmaexpres-frontend-dev
   frontend
-  prediction-frontend
 ```
 
 ### Desarrollo
@@ -86,7 +83,6 @@ docker compose --env-file .env.dev up -d --build
 
 cd ../FarmaExpres-Micro-NoSQL
 docker compose --env-file .env.dev up -d --build
-docker compose --env-file .env.dev -f docker-compose.frontend.yml up -d --build
 
 cd ../FarmaExpres-Frontend/frontend
 docker compose --env-file .env.dev up -d --build
@@ -97,7 +93,6 @@ Puertos por defecto en `dev`:
 - Frontend principal: `http://localhost:3000`
 - Gateway oficial: `http://localhost:8080`
 - Prediction service directo: `http://localhost:8085`
-- Frontend auxiliar: `http://localhost:5174`
 - MongoDB: `mongodb://localhost:27017`
 
 ### QA
@@ -108,7 +103,6 @@ docker compose --env-file .env.qa up -d --build
 
 cd ../FarmaExpres-Micro-NoSQL
 docker compose --env-file .env.qa up -d --build
-docker compose --env-file .env.qa -f docker-compose.frontend.yml up -d --build
 
 cd ../FarmaExpres-Frontend/frontend
 docker compose --env-file .env.qa up -d --build
@@ -119,7 +113,6 @@ Puertos por defecto en `qa`:
 - Frontend principal: `http://localhost:4000`
 - Gateway oficial: `http://localhost:9080`
 - Prediction service directo: `http://localhost:9085`
-- Frontend auxiliar: `http://localhost:5175`
 - MongoDB: `mongodb://localhost:37017`
 
 ### Main
@@ -130,7 +123,6 @@ docker compose --env-file .env.main up -d --build
 
 cd ../FarmaExpres-Micro-NoSQL
 docker compose --env-file .env.main up -d --build
-docker compose --env-file .env.main -f docker-compose.frontend.yml up -d --build
 
 cd ../FarmaExpres-Frontend/frontend
 docker compose --env-file .env.main up -d --build
@@ -141,7 +133,6 @@ Puertos por defecto en `main`:
 - Frontend principal: `http://localhost:5000`
 - Gateway oficial: `http://localhost:10080`
 - Prediction service directo: `http://localhost:10085`
-- Frontend auxiliar: `http://localhost:5176`
 - MongoDB: `mongodb://localhost:47017`
 
 Cada ambiente usa una red Docker diferente:
@@ -155,9 +146,8 @@ Eso permite que `api-gateway` encuentre el contenedor `prediction-service` del m
 Las variables de agrupación son:
 
 - `BACKEND_COMPOSE_PROJECT_NAME`: grupo donde quedan `mongo` y `prediction-service`.
-- `FRONTEND_COMPOSE_PROJECT_NAME`: grupo donde queda `prediction-frontend`.
 
-> Importante: como el backend principal y el backend predictivo comparten el mismo grupo Docker, evita usar `docker compose down --remove-orphans` desde un solo repositorio. Para apagar correctamente, baja primero el frontend auxiliar, luego el microservicio NoSQL, después el frontend principal y al final el backend.
+> Importante: como el backend principal y el backend predictivo comparten el mismo grupo Docker, evita usar `docker compose down --remove-orphans` desde un solo repositorio.
 
 ## Endpoints oficiales por gateway
 

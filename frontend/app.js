@@ -1,14 +1,6 @@
-function detectApiBase() {
-  const byFrontendPort = {
-    "5174": "http://localhost:8085",
-    "5175": "http://localhost:9085",
-    "5176": "http://localhost:10085",
-  };
-  return byFrontendPort[window.location.port] || "http://localhost:8085";
-}
-
 const API_BASE = new URLSearchParams(window.location.search).get("api")
-  || detectApiBase();
+  || localStorage.getItem("farmaexpresApiBase")
+  || "http://localhost:8085";
 
 localStorage.setItem("farmaexpresApiBase", API_BASE);
 

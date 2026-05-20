@@ -432,12 +432,11 @@
         <ul>
           <li>Backend principal: <code>docker compose --env-file .env.dev up -d --build</code>.</li>
           <li>Microservicio NoSQL: <code>docker compose --env-file .env.dev up -d --build</code>.</li>
-          <li>Frontend auxiliar de predicción: <code>docker compose --env-file .env.dev -f docker-compose.frontend.yml up -d --build</code>.</li>
           <li>Frontend: se entra con un usuario válido y se abre la opción <strong>Predicciones</strong>.</li>
           <li>El frontend llama al gateway, no directamente a MongoDB.</li>
         </ul>
         <p class="note">
-          Para QA o main se cambian los archivos de entorno y la red Docker, siguiendo el mismo estilo usado por FarmaExpres. En Docker Desktop, <code>mongo</code> y <code>prediction-service</code> quedan agrupados con el backend; <code>prediction-frontend</code> queda agrupado con el frontend.
+          Para QA o main se cambian los archivos de entorno y la red Docker, siguiendo el mismo estilo usado por FarmaExpres. En Docker Desktop, <code>mongo</code> y <code>prediction-service</code> quedan agrupados con el backend.
         </p>
       </section>
     </main>

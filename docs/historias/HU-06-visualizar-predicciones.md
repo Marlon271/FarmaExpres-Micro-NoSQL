@@ -16,6 +16,6 @@ La vista no busca reemplazar el frontend principal. Es un tablero de validación
 
 ## Criterios de aceptación
 
-- El frontend corre por Docker en `http://localhost:5174`.
+- El frontend principal corre por Docker y muestra el módulo de predicciones desde la interfaz de FarmaExpres.
 - El botón de estado muestra si MongoDB y la API están disponibles.
 - El tablero explica que se predice: demanda esperada a 7 días y riesgo de agotamiento.
