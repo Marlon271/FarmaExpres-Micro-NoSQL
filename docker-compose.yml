@@ -1,0 +1,55 @@
+name: ${BACKEND_COMPOSE_PROJECT_NAME:-farmaexpres-dev}
+
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - prediction-data
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  prediction-service:
+    build: ./backend
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "${PREDICTION_PORT:-8085}:8000"
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DATABASE: ${MONGO_DATABASE:-farmaexpres_predictions}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      APP_ENV: ${APP_ENV:-dev}
+      JWT_SECRET: ${JWT_SECRET:-mi_clave_super_secreta_ultra_segura_de_256_bits_minimo_1234567890}
+      INVENTORY_SERVICE_URL: ${INVENTORY_SERVICE_URL:-http://inventory-service:8082}
+      INVENTORY_SERVICE_TIMEOUT_MS: ${INVENTORY_SERVICE_TIMEOUT_MS:-5000}
+      ENABLE_DEV_SEED_ENDPOINTS: ${ENABLE_DEV_SEED_ENDPOINTS:-true}
+      RELATIONAL_DB_URL: ${RELATIONAL_DB_URL:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      prediction-data:
+      default:
+        aliases:
+          - prediction-service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  mongo_data:
+
+networks:
+  default:
+    external: true
+    name: ${BACKEND_NETWORK:-farmaexpres-dev_default}
+  prediction-data:

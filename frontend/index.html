@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FarmaExpres Micro NoSQL</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div class="brand-block">
+          <div class="brand-mark" aria-hidden="true">FX</div>
+          <div>
+            <strong>FarmaExpres Micro NoSQL</strong>
+            <span>Módulo predictivo integrado</span>
+          </div>
+        </div>
+        <div class="service-chip" id="service-status">Comprobando servicio</div>
+      </header>
+
+      <section class="hero-panel">
+        <div class="hero-copy">
+          <h1>Predicción de demanda e inventario</h1>
+          <p>
+            El microservicio lee productos, lotes y movimientos del inventario relacional,
+            guarda una copia flexible en MongoDB, limpia los registros y calcula una demanda
+            estimada para los próximos 7 días.
+          </p>
+          <p class="model-note">
+            Como el backend actual no tiene una tabla formal de ventas, el modelo usa los
+            movimientos tipo <strong>Exit</strong> como aproximación de demanda.
+          </p>
+        </div>
+
+        <div class="action-console" aria-label="Acciones principales">
+          <div class="console-title">
+            <strong>Flujo operativo</strong>
+            <span id="pipeline-state">Esperando revisión</span>
+          </div>
+          <div class="button-grid">
+            <button id="health-btn" type="button">Ver estado</button>
+            <button id="seed-btn" type="button">Cargar datos de prueba</button>
+            <button id="postgres-btn" type="button">Ingestar PostgreSQL</button>
+            <button id="clean-btn" type="button">Limpiar datos</button>
+            <button id="train-btn" type="button">Entrenar modelo</button>
+            <button id="refresh-btn" type="button">Refrescar</button>
+          </div>
+          <p id="message" class="message">Conectando con la API local...</p>
+        </div>
+      </section>
+
+      <section class="pipeline-panel" aria-label="Flujo de datos">
+        <div class="section-heading">
+          <div>
+            <h2>Comunicación relacional a NoSQL</h2>
+            <p id="status-detail">El tablero mostrará aquí el estado de MongoDB y de las colecciones.</p>
+          </div>
+          <span class="api-label" id="api-label">API local</span>
+        </div>
+        <div class="pipeline-steps">
+          <article class="pipeline-step" data-step="postgres">
+            <span class="step-icon">SQL</span>
+            <strong>PostgreSQL</strong>
+            <p>Tablas product, batch y motion.</p>
+          </article>
+          <article class="pipeline-step" data-step="extract">
+            <span class="step-icon">ETL</span>
+            <strong>Extracción</strong>
+            <p>Consulta local o datos de prueba.</p>
+          </article>
+          <article class="pipeline-step" data-step="raw">
+            <span class="step-icon">RAW</span>
+            <strong>raw_data</strong>
+            <p>Datos crudos en MongoDB.</p>
+          </article>
+          <article class="pipeline-step" data-step="clean">
+            <span class="step-icon">CLR</span>
+            <strong>Limpieza</strong>
+            <p>Duplicados, fechas y cantidades.</p>
+          </article>
+          <article class="pipeline-step" data-step="model">
+            <span class="step-icon">AVG</span>
+            <strong>Promedio móvil</strong>
+            <p>Ventana de 30 días.</p>
+          </article>
+          <article class="pipeline-step" data-step="predict">
+            <span class="step-icon">PRD</span>
+            <strong>predictions</strong>
+            <p>Demanda, riesgo y reposición.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="summary-grid" aria-label="Resumen del modelo">
+        <article class="summary-card">
+          <span>Datos crudos</span>
+          <strong id="raw-count">0</strong>
+        </article>
+        <article class="summary-card">
+          <span>Datos limpios</span>
+          <strong id="clean-count">0</strong>
+        </article>
+        <article class="summary-card">
+          <span>Predicciones</span>
+          <strong id="prediction-count">0</strong>
+        </article>
+        <article class="summary-card risk-card">
+          <span>Riesgo alto</span>
+          <strong id="high-risk-count">0</strong>
+        </article>
+        <article class="summary-card">
+          <span>Error medio</span>
+          <strong id="mae-value">--</strong>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <div class="panel demand-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Demanda esperada</h2>
+              <p>Medicamentos con mayor salida estimada para los próximos 7 días.</p>
+            </div>
+            <span id="last-trained">Sin entrenamiento</span>
+          </div>
+          <div class="chart" id="demand-chart"></div>
+        </div>
+
+        <div class="panel priority-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Prioridad de reposición</h2>
+              <p>Productos que requieren atención por demanda o stock.</p>
+            </div>
+          </div>
+          <div class="top-list" id="top-list"></div>
+        </div>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Predicciones por medicamento</h2>
+            <p>Resultado guardado en la colección predictions.</p>
+          </div>
+          <span id="table-state">Esperando datos</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Medicamento</th>
+                <th>Código</th>
+                <th>Stock</th>
+                <th>Demanda 7 días</th>
+                <th>Días hasta agotarse</th>
+                <th>Riesgo</th>
+              </tr>
+            </thead>
+            <tbody id="predictions-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="activity-panel" aria-label="Mensajes del proceso">
+        <div class="panel-heading">
+          <div>
+            <h2>Bitácora del proceso</h2>
+            <p>Mensajes claros para sustentar qué ocurrió en cada paso.</p>
+          </div>
+          <span id="message-state">Listo</span>
+        </div>
+        <ol id="activity-log">
+          <li>Tablero iniciado. Revisa el estado o carga datos de prueba para comenzar.</li>
+        </ol>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FarmaExpres | Informe del Servicio Predictivo NoSQL</title>
+    <style>
+      :root {
+        --ink: #17233d;
+        --muted: #5f6f89;
+        --line: #dfe7f3;
+        --soft: #f5f8fb;
+        --green: #2e7d68;
+        --blue: #2f5fd4;
+        --amber: #b7791f;
+        --red: #b83232;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #eef3f1;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.58;
+      }
+
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 32px auto;
+      }
+
+      header,
+      section {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-bottom: 18px;
+        padding: 28px;
+      }
+
+      header {
+        border-top: 6px solid var(--green);
+      }
+
+      .eyebrow {
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.18;
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(32px, 5vw, 56px);
+        margin-top: 8px;
+      }
+
+      h2 {
+        font-size: 26px;
+        margin-bottom: 14px;
+      }
+
+      h3 {
+        font-size: 18px;
+        margin-bottom: 8px;
+      }
+
+      p {
+        margin: 10px 0 0;
+      }
+
+      .lead {
+        color: var(--muted);
+        font-size: 18px;
+        max-width: 860px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .card {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        margin: 4px 6px 0 0;
+        padding: 6px 10px;
+      }
+
+      .tag.green { background: #dcf3ea; color: #236552; }
+      .tag.blue { background: #e2eaff; color: #294fa9; }
+      .tag.amber { background: #fff4d8; color: #8a5a12; }
+      .tag.red { background: #ffe2e2; color: #9d2929; }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .step {
+        min-height: 142px;
+        position: relative;
+        background: #f9fbff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      .step::after {
+        content: "→";
+        position: absolute;
+        right: -14px;
+        top: 50%;
+        color: var(--blue);
+        font-size: 24px;
+        font-weight: 900;
+        transform: translateY(-50%);
+      }
+
+      .step:nth-child(4)::after,
+      .step:nth-child(8)::after {
+        content: "";
+      }
+
+      .number {
+        align-items: center;
+        background: var(--blue);
+        border-radius: 999px;
+        color: #fff;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 900;
+        height: 26px;
+        justify-content: center;
+        margin-bottom: 10px;
+        width: 26px;
+      }
+
+      ul {
+        margin: 10px 0 0;
+        padding-left: 20px;
+      }
+
+      li + li {
+        margin-top: 6px;
+      }
+
+      code {
+        background: #edf2f7;
+        border-radius: 6px;
+        color: #17233d;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: .92em;
+        padding: 2px 6px;
+      }
+
+      .table {
+        border-collapse: collapse;
+        margin-top: 12px;
+        width: 100%;
+      }
+
+      .table th,
+      .table td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .table th {
+        background: #f7f9fc;
+        font-size: 13px;
+        text-transform: uppercase;
+      }
+
+      .note {
+        border-left: 4px solid var(--green);
+        color: var(--muted);
+        margin-top: 12px;
+        padding-left: 14px;
+      }
+
+      @media (max-width: 860px) {
+        .cols-2,
+        .cols-3,
+        .flow {
+          grid-template-columns: 1fr;
+        }
+
+        .step::after {
+          bottom: -22px;
+          left: 24px;
+          right: auto;
+          top: auto;
+          transform: rotate(90deg);
+        }
+
+        .step:nth-child(4)::after {
+          content: "→";
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">FarmaExpres NoSQL · HU-MDRT-002 / HU-MDRT-003</div>
+        <h1>Servicio predictivo de inventario con MongoDB</h1>
+        <p class="lead">
+          Este informe explica, de forma sencilla, cómo se integra el nuevo microservicio predictivo con FarmaExpres,
+          cómo toma datos del sistema relacional, cómo los prepara en MongoDB y cómo calcula una predicción básica de demanda.
+        </p>
+        <p>
+          La solución no reemplaza el backend principal. Funciona como un microservicio aparte, conectado por el API Gateway,
+          para apoyar decisiones de reposición de medicamentos.
+        </p>
+      </header>
+
+      <section>
+        <h2>Qué se construyó</h2>
+        <div class="grid cols-3">
+          <div class="card">
+            <h3>Microservicio Python</h3>
+            <p>API con FastAPI encargada de recibir datos, limpiarlos, recalcular el modelo y exponer predicciones.</p>
+          </div>
+          <div class="card">
+            <h3>MongoDB</h3>
+            <p>Base no relacional para guardar datos crudos, datos limpios, predicciones, métricas y snapshot de productos.</p>
+          </div>
+          <div class="card">
+            <h3>Integración FarmaExpres</h3>
+            <p>El API Gateway enruta <code>/api/predictions</code> hacia el microservicio y conserva el uso de JWT.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Flujo de integración</h2>
+        <p>
+          El proceso comienza en el frontend o en una petición REST. El gateway valida la ruta, el microservicio predictivo
+          solicita un snapshot analítico al servicio de inventario y luego guarda una copia procesable en MongoDB.
+        </p>
+        <div class="flow" aria-label="Diagrama de flujo de integración">
+          <div class="step">
+            <span class="number">1</span>
+            <h3>Usuario o frontend</h3>
+            <p>Solicita estado, ingesta, limpieza, entrenamiento o consulta de predicciones.</p>
+          </div>
+          <div class="step">
+            <span class="number">2</span>
+            <h3>API Gateway</h3>
+            <p>Recibe <code>/api/predictions</code>, aplica seguridad y envía la petición al servicio predictivo.</p>
+          </div>
+          <div class="step">
+            <span class="number">3</span>
+            <h3>Prediction Service</h3>
+            <p>Usa el token JWT para pedir datos al <code>inventory-service</code>.</p>
+          </div>
+          <div class="step">
+            <span class="number">4</span>
+            <h3>Inventory Service</h3>
+            <p>Construye un snapshot con productos activos, lotes y movimientos de inventario.</p>
+          </div>
+          <div class="step">
+            <span class="number">5</span>
+            <h3>PostgreSQL</h3>
+            <p>La información viene de las tablas relacionales gobernadas por el backend y Liquibase.</p>
+          </div>
+          <div class="step">
+            <span class="number">6</span>
+            <h3>MongoDB</h3>
+            <p>Guarda <code>raw_data</code> y <code>products_snapshot</code> como base flexible para análisis.</p>
+          </div>
+          <div class="step">
+            <span class="number">7</span>
+            <h3>Limpieza</h3>
+            <p>Normaliza nombres, fechas, cantidades, duplicados y registros incompletos.</p>
+          </div>
+          <div class="step">
+            <span class="number">8</span>
+            <h3>Predicción</h3>
+            <p>Calcula demanda esperada, riesgo de agotamiento y prioridad de reposición.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Datos usados para el modelo</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Dato</th>
+              <th>Origen</th>
+              <th>Uso en la predicción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Medicamentos activos</td>
+              <td><code>inventory-service</code> / productos</td>
+              <td>Define qué productos se evalúan y evita analizar productos inactivos.</td>
+            </tr>
+            <tr>
+              <td>Movimientos tipo salida</td>
+              <td>Historial de inventario</td>
+              <td>Se usan como señal de demanda histórica.</td>
+            </tr>
+            <tr>
+              <td>Stock actual y stock mínimo</td>
+              <td>Producto y movimiento</td>
+              <td>Permite estimar si la demanda proyectada supera la disponibilidad.</td>
+            </tr>
+            <tr>
+              <td>Lotes y vencimientos</td>
+              <td>Inventario por lote</td>
+              <td>Ayuda a conservar contexto para análisis posterior de rotación y vencimiento.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="note">
+          Los datos de prueba existen para validar el flujo local. No se presentan como datos reales de producción.
+        </p>
+      </section>
+
+      <section>
+        <h2>Tratamiento de datos</h2>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>Limpieza aplicada</h3>
+            <ul>
+              <li>Elimina duplicados por producto, tipo de movimiento, fecha, cantidad y lote.</li>
+              <li>Valida campos vacíos o incompletos.</li>
+              <li>Normaliza nombres de medicamentos, quitando tildes y espacios repetidos.</li>
+              <li>Convierte fechas a formato ISO para compararlas con consistencia.</li>
+              <li>Marca cantidades negativas, stock negativo o fechas inválidas.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Colecciones MongoDB</h3>
+            <ul>
+              <li><code>raw_data</code>: entrada original desde inventario o datos de prueba.</li>
+              <li><code>cleaned_data</code>: registros normalizados y validados.</li>
+              <li><code>predictions</code>: resultado del modelo predictivo.</li>
+              <li><code>model_metrics</code>: métricas de limpieza y entrenamiento.</li>
+              <li><code>products_snapshot</code>: copia del estado relevante de medicamentos.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Modelo predictivo</h2>
+        <p>
+          La primera versión usa un promedio móvil de 30 días. Es una técnica estadística sencilla y explicable:
+          suma las salidas recientes de cada medicamento, calcula un promedio diario y lo multiplica por el horizonte
+          de predicción. Por defecto, el horizonte es de 7 días.
+        </p>
+        <div class="grid cols-3">
+          <div class="card">
+            <h3>Demanda esperada</h3>
+            <p><code>promedio_diario × días</code>. El resultado se redondea hacia arriba para no subestimar unidades.</p>
+          </div>
+          <div class="card">
+            <h3>Días a agotamiento</h3>
+            <p><code>stock_actual / promedio_diario</code>. Si no hay demanda reciente, queda sin estimación.</p>
+          </div>
+          <div class="card">
+            <h3>Riesgo</h3>
+            <p>Sin stock, alto, medio o bajo, según stock actual, stock mínimo y demanda esperada.</p>
+          </div>
+        </div>
+        <p class="note">
+          Este modelo es adecuado para una primera entrega porque se puede explicar, probar y ajustar con datos reales
+          antes de pasar a algoritmos más avanzados.
+        </p>
+      </section>
+
+      <section>
+        <h2>Historias y alcance MoSCoW</h2>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>Historias trabajadas</h3>
+            <ul>
+              <li><strong>HU-MDRT-002:</strong> integración del servicio predictivo NoSQL, gateway e ingesta desde <code>inventory-service</code> hacia MongoDB.</li>
+              <li><strong>HU-MDRT-003:</strong> visualización del tablero predictivo en el frontend.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Estado MoSCoW</h3>
+            <p><span class="tag green">Must</span> MongoDB, limpieza, predicción, endpoints e integración base.</p>
+            <p><span class="tag blue">Should</span> Métricas claras, documentación y frontend operativo.</p>
+            <p><span class="tag amber">Could</span> Mejorar el modelo con ventas reales, estacionalidad y más métricas.</p>
+            <p><span class="tag red">Won't now</span> No se implementa un modelo complejo ni despliegue productivo externo en esta entrega.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Cómo se ejecuta localmente</h2>
+        <ul>
+          <li>Backend principal: <code>docker compose --env-file .env.dev up -d --build</code>.</li>
+          <li>Microservicio NoSQL: <code>docker compose --env-file .env.dev up -d --build</code>.</li>
+          <li>Frontend: se entra con un usuario válido y se abre la opción <strong>Predicciones</strong>.</li>
+          <li>El frontend llama al gateway, no directamente a MongoDB.</li>
+        </ul>
+        <p class="note">
+          Para QA o main se cambian los archivos de entorno y la red Docker, siguiendo el mismo estilo usado por FarmaExpres. En Docker Desktop, <code>mongo</code> y <code>prediction-service</code> quedan agrupados con el backend.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
