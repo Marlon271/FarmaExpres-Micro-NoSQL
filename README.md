@@ -44,31 +44,84 @@ Frontend React -> API Gateway -> prediction-service -> inventory-service -> Post
 | `predictions` | Demanda esperada, riesgo y días estimados hasta agotamiento. |
 | `model_metrics` | Métricas de limpieza, entrenamiento y error aproximado. |
 
-## Ejecución integrada en desarrollo
+## Ejecución integrada por ambiente
 
-Primero levanta el backend principal:
+Cada ambiente se levanta con su archivo `.env` correspondiente. El orden recomendado es:
+
+1. Backend principal.
+2. Microservicio NoSQL predictivo.
+3. Frontend principal.
+
+### Desarrollo
 
 ```bash
 cd ../FarmaExpres_Backend
 docker compose --env-file .env.dev up -d --build
-```
 
-Luego levanta este microservicio:
-
-```bash
 cd ../FarmaExpres-Micro-NoSQL
-cp .env.dev.example .env.dev
+docker compose --env-file .env.dev up -d --build
+
+cd ../FarmaExpres-Frontend/frontend
 docker compose --env-file .env.dev up -d --build
 ```
 
 Puertos por defecto en `dev`:
 
+- Frontend principal: `http://localhost:3000`
 - Gateway oficial: `http://localhost:8080`
 - Prediction service directo: `http://localhost:8085`
 - Frontend auxiliar: `http://localhost:5174`
 - MongoDB: `mongodb://localhost:27017`
 
-La red `BACKEND_NETWORK=farmaexpres-dev_default` permite que `api-gateway` encuentre el contenedor `prediction-service`.
+### QA
+
+```bash
+cd ../FarmaExpres_Backend
+docker compose --env-file .env.qa up -d --build
+
+cd ../FarmaExpres-Micro-NoSQL
+docker compose --env-file .env.qa up -d --build
+
+cd ../FarmaExpres-Frontend/frontend
+docker compose --env-file .env.qa up -d --build
+```
+
+Puertos por defecto en `qa`:
+
+- Frontend principal: `http://localhost:4000`
+- Gateway oficial: `http://localhost:9080`
+- Prediction service directo: `http://localhost:9085`
+- Frontend auxiliar: `http://localhost:5175`
+- MongoDB: `mongodb://localhost:37017`
+
+### Main
+
+```bash
+cd ../FarmaExpres_Backend
+docker compose --env-file .env.main up -d --build
+
+cd ../FarmaExpres-Micro-NoSQL
+docker compose --env-file .env.main up -d --build
+
+cd ../FarmaExpres-Frontend/frontend
+docker compose --env-file .env.main up -d --build
+```
+
+Puertos por defecto en `main`:
+
+- Frontend principal: `http://localhost:5000`
+- Gateway oficial: `http://localhost:10080`
+- Prediction service directo: `http://localhost:10085`
+- Frontend auxiliar: `http://localhost:5176`
+- MongoDB: `mongodb://localhost:47017`
+
+Cada ambiente usa una red Docker diferente:
+
+- `dev`: `BACKEND_NETWORK=farmaexpres-dev_default`
+- `qa`: `BACKEND_NETWORK=farmaexpres-qa_default`
+- `main`: `BACKEND_NETWORK=farmaexpres-main_default`
+
+Eso permite que `api-gateway` encuentre el contenedor `prediction-service` del mismo ambiente sin mezclar datos ni contenedores.
 
 ## Endpoints oficiales por gateway
 
