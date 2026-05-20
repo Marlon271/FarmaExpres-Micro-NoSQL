@@ -2,6 +2,9 @@
 .env
 .env.*
 !.env.*.example
+!.env.dev
+!.env.qa
+!.env.main
 .venv/
 venv/
 __pycache__/

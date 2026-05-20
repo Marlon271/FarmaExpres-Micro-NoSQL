@@ -1,4 +1,4 @@
-name: farmaexpres-micro-nosql
+name: ${COMPOSE_PROJECT_NAME:-farmaexpres-micro-nosql-dev}
 
 services:
   mongo:
