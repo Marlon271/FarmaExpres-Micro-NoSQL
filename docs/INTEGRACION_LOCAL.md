@@ -44,11 +44,14 @@ cd ../FarmaExpres-Micro-NoSQL
 docker compose --env-file .env.dev up -d --build
 ```
 
+Este comando levanta `mongo` y `prediction-service` dentro del mismo grupo Docker del backend. En Docker Desktop deben aparecer en `farmaexpres-dev`, junto con `postgres`, `api-gateway`, `inventory-service` y los demás servicios principales.
+
 El repositorio ya incluye `.env.dev`, `.env.qa` y `.env.main` para ejecución local. Los archivos `.env.*.example` quedan como referencia si el equipo necesita reconstruirlos.
 
 La variable clave es:
 
 ```text
+BACKEND_COMPOSE_PROJECT_NAME=farmaexpres-dev
 BACKEND_NETWORK=farmaexpres-dev_default
 ```
 
@@ -63,6 +66,14 @@ Con esa red, el gateway del backend puede resolver:
 ```text
 http://prediction-service:8000
 ```
+
+Para apagar este bloque sin afectar otros contenedores del mismo proyecto, se usa:
+
+```bash
+docker compose --env-file .env.dev down
+```
+
+No se debe usar `--remove-orphans` desde un solo repositorio porque el backend principal y el backend predictivo comparten el nombre de proyecto Docker.
 
 ## 3. Probar por gateway
 
@@ -126,8 +137,15 @@ docker compose --env-file .env.main up -d --build
 
 El frontend estático de este repositorio se conserva como tablero auxiliar de diagnóstico:
 
+```bash
+cd ../FarmaExpres-Micro-NoSQL
+docker compose --env-file .env.dev -f docker-compose.frontend.yml up -d --build
+```
+
 ```text
 http://localhost:5174
 ```
+
+Ese contenedor se llama `prediction-frontend` y aparece dentro del grupo `farmaexpres-frontend-dev`, junto con el `frontend` principal. Para `qa` y `main` se usan los mismos comandos cambiando el archivo `.env`.
 
 Los datos generados por `POST /seed-test-data` y el fallback `RELATIONAL_DB_URL` son solo para pruebas técnicas. La integración oficial usa `inventory-service`.

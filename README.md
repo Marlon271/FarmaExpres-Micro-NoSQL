@@ -49,8 +49,34 @@ Frontend React -> API Gateway -> prediction-service -> inventory-service -> Post
 Cada ambiente se levanta con su archivo `.env` correspondiente. El orden recomendado es:
 
 1. Backend principal.
-2. Microservicio NoSQL predictivo.
+2. Backend predictivo NoSQL (`mongo` y `prediction-service`).
 3. Frontend principal.
+4. Frontend auxiliar de predicciones, solo si se quiere revisar el microservicio por separado.
+
+Docker Desktop agrupa los contenedores por nombre de proyecto. Por eso este repositorio se levanta en dos Compose:
+
+| Compose | Contenedores | Grupo esperado en Docker Desktop |
+| --- | --- | --- |
+| `docker-compose.yml` | `mongo`, `prediction-service` | `farmaexpres-dev`, `farmaexpres-qa` o `farmaexpres-main` |
+| `docker-compose.frontend.yml` | `prediction-frontend` | `farmaexpres-frontend-dev`, `farmaexpres-frontend-qa` o `farmaexpres-frontend-main` |
+
+Con esta organización, el ambiente de desarrollo se ve así:
+
+```text
+farmaexpres-dev
+  postgres
+  auth-service
+  inventory-service
+  audit-service
+  alert-service
+  api-gateway
+  prediction-service
+  mongo
+
+farmaexpres-frontend-dev
+  frontend
+  prediction-frontend
+```
 
 ### Desarrollo
 
@@ -60,6 +86,7 @@ docker compose --env-file .env.dev up -d --build
 
 cd ../FarmaExpres-Micro-NoSQL
 docker compose --env-file .env.dev up -d --build
+docker compose --env-file .env.dev -f docker-compose.frontend.yml up -d --build
 
 cd ../FarmaExpres-Frontend/frontend
 docker compose --env-file .env.dev up -d --build
@@ -81,6 +108,7 @@ docker compose --env-file .env.qa up -d --build
 
 cd ../FarmaExpres-Micro-NoSQL
 docker compose --env-file .env.qa up -d --build
+docker compose --env-file .env.qa -f docker-compose.frontend.yml up -d --build
 
 cd ../FarmaExpres-Frontend/frontend
 docker compose --env-file .env.qa up -d --build
@@ -102,6 +130,7 @@ docker compose --env-file .env.main up -d --build
 
 cd ../FarmaExpres-Micro-NoSQL
 docker compose --env-file .env.main up -d --build
+docker compose --env-file .env.main -f docker-compose.frontend.yml up -d --build
 
 cd ../FarmaExpres-Frontend/frontend
 docker compose --env-file .env.main up -d --build
@@ -122,6 +151,13 @@ Cada ambiente usa una red Docker diferente:
 - `main`: `BACKEND_NETWORK=farmaexpres-main_default`
 
 Eso permite que `api-gateway` encuentre el contenedor `prediction-service` del mismo ambiente sin mezclar datos ni contenedores.
+
+Las variables de agrupación son:
+
+- `BACKEND_COMPOSE_PROJECT_NAME`: grupo donde quedan `mongo` y `prediction-service`.
+- `FRONTEND_COMPOSE_PROJECT_NAME`: grupo donde queda `prediction-frontend`.
+
+> Importante: como el backend principal y el backend predictivo comparten el mismo grupo Docker, evita usar `docker compose down --remove-orphans` desde un solo repositorio. Para apagar correctamente, baja primero el frontend auxiliar, luego el microservicio NoSQL, después el frontend principal y al final el backend.
 
 ## Endpoints oficiales por gateway
 

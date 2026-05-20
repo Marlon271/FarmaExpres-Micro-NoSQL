@@ -1,4 +1,4 @@
-name: ${COMPOSE_PROJECT_NAME:-farmaexpres-micro-nosql-dev}
+name: ${BACKEND_COMPOSE_PROJECT_NAME:-farmaexpres-dev}
 
 services:
   mongo:
@@ -36,7 +36,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       prediction-data:
-      backend-network:
+      default:
         aliases:
           - prediction-service
     healthcheck:
@@ -45,20 +45,11 @@ services:
       timeout: 10s
       retries: 5
 
-  frontend:
-    build: ./frontend
-    depends_on:
-      - prediction-service
-    ports:
-      - "${FRONTEND_PORT:-5174}:80"
-    networks:
-      - prediction-data
-
 volumes:
   mongo_data:
 
 networks:
-  prediction-data:
-  backend-network:
+  default:
     external: true
     name: ${BACKEND_NETWORK:-farmaexpres-dev_default}
+  prediction-data:

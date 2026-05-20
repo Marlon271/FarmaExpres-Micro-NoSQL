@@ -27,6 +27,7 @@ Para el módulo predictivo se debe levantar también este repositorio con el arc
 ```bash
 cd ../FarmaExpres-Micro-NoSQL
 docker compose --env-file .env.dev up -d --build
+docker compose --env-file .env.dev -f docker-compose.frontend.yml up -d --build
 ```
 
 Equivalencias:
@@ -34,6 +35,11 @@ Equivalencias:
 - `dev`: `BACKEND_NETWORK=farmaexpres-dev_default`, API directa `8085`, MongoDB `27017`, frontend auxiliar `5174`.
 - `qa`: `BACKEND_NETWORK=farmaexpres-qa_default`, API directa `9085`, MongoDB `37017`, frontend auxiliar `5175`.
 - `main`: `BACKEND_NETWORK=farmaexpres-main_default`, API directa `10085`, MongoDB `47017`, frontend auxiliar `5176`.
+
+La agrupación en Docker Desktop queda alineada con el resto del proyecto:
+
+- `mongo` y `prediction-service` aparecen dentro de `farmaexpres-dev`, `farmaexpres-qa` o `farmaexpres-main`.
+- `prediction-frontend` aparece dentro de `farmaexpres-frontend-dev`, `farmaexpres-frontend-qa` o `farmaexpres-frontend-main`.
 
 Dentro de Docker los servicios conservan sus puertos internos; por ejemplo PostgreSQL sigue en `5432` dentro de la red de contenedores.
 
@@ -48,6 +54,8 @@ Servicios principales:
 - `audit-service`: Spring Boot en `8084`.
 - `api-gateway`: Spring Boot en `8080`.
 - `prediction-service`: FastAPI en `8000` interno, ejecutado desde este repositorio y conectado a la red Docker del backend.
+- `mongo`: MongoDB 7 para datos crudos, limpios, predicciones y métricas.
+- `prediction-frontend`: tablero auxiliar de diagnóstico, agrupado con el frontend principal.
 
 ## Dónde está el backend
 
