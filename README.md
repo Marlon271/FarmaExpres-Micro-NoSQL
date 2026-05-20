@@ -131,6 +131,12 @@ Todos los endpoints de negocio se consumen por:
 http://localhost:8080/api/predictions
 ```
 
+Puertos del gateway por ambiente:
+
+- `dev`: `http://localhost:8080/api/predictions`
+- `qa`: `http://localhost:9080/api/predictions`
+- `main`: `http://localhost:10080/api/predictions`
+
 | Método | Ruta | Rol | Descripción |
 | --- | --- | --- | --- |
 | `GET` | `/api/predictions/health` | público | Revisa estado del microservicio y MongoDB. |
@@ -144,7 +150,7 @@ http://localhost:8080/api/predictions
 
 ## Flujo de prueba con token
 
-1. Inicia sesión en el backend:
+1. Inicia sesión en el backend del ambiente correspondiente:
 
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \

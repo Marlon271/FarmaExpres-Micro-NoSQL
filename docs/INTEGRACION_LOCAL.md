@@ -24,6 +24,13 @@ cd ../FarmaExpres_Backend
 docker compose --env-file .env.dev up -d --build
 ```
 
+Para otros ambientes:
+
+```bash
+docker compose --env-file .env.qa up -d --build
+docker compose --env-file .env.main up -d --build
+```
+
 Servicios esperados:
 
 - `api-gateway`: `http://localhost:8080`
@@ -34,15 +41,22 @@ Servicios esperados:
 
 ```bash
 cd ../FarmaExpres-Micro-NoSQL
-cp .env.dev.example .env.dev
 docker compose --env-file .env.dev up -d --build
 ```
+
+El repositorio ya incluye `.env.dev`, `.env.qa` y `.env.main` para ejecución local. Los archivos `.env.*.example` quedan como referencia si el equipo necesita reconstruirlos.
 
 La variable clave es:
 
 ```text
 BACKEND_NETWORK=farmaexpres-dev_default
 ```
+
+Equivalencias por ambiente:
+
+- `dev`: `BACKEND_NETWORK=farmaexpres-dev_default`, gateway `http://localhost:8080`, MongoDB `mongodb://localhost:27017`.
+- `qa`: `BACKEND_NETWORK=farmaexpres-qa_default`, gateway `http://localhost:9080`, MongoDB `mongodb://localhost:37017`.
+- `main`: `BACKEND_NETWORK=farmaexpres-main_default`, gateway `http://localhost:10080`, MongoDB `mongodb://localhost:47017`.
 
 Con esa red, el gateway del backend puede resolver:
 
@@ -93,6 +107,20 @@ El frontend integrado consume el gateway con rutas relativas:
 ```
 
 El módulo visual queda dentro de `FarmaExpres-Frontend`, no como una aplicación separada para usuarios finales.
+
+Para levantarlo por Docker:
+
+```bash
+cd ../FarmaExpres-Frontend/frontend
+docker compose --env-file .env.dev up -d --build
+```
+
+Para QA o main:
+
+```bash
+docker compose --env-file .env.qa up -d --build
+docker compose --env-file .env.main up -d --build
+```
 
 ## 5. Herramientas locales de apoyo
 

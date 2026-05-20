@@ -84,6 +84,24 @@ Resultado observado:
 - Se usa promedio móvil porque es simple, explicable y suficiente para una primera predicción con pocos datos reales.
 - Se usa `motion.type = 'Exit'` como demanda aproximada porque no se encontró una tabla formal de ventas u órdenes en el backend actual.
 - Se agregan plantillas `.env.dev.example`, `.env.qa.example` y `.env.main.example` para seguir el patrón de ambientes del proyecto.
+- Se agregan `.env.dev`, `.env.qa` y `.env.main` versionados para que un clon limpio pueda levantar el microservicio sin reconstruir manualmente la configuración local.
+
+## Despliegue por ambiente
+
+El orden de ejecución validado es:
+
+```bash
+cd FarmaExpres_Backend
+docker compose --env-file .env.dev up -d --build
+
+cd ../FarmaExpres-Micro-NoSQL
+docker compose --env-file .env.dev up -d --build
+
+cd ../FarmaExpres-Frontend/frontend
+docker compose --env-file .env.dev up -d --build
+```
+
+Para `qa` o `main`, se cambia `.env.dev` por `.env.qa` o `.env.main` en los tres repositorios. Cada ambiente conserva su propia red Docker, puertos publicados y base MongoDB.
 
 ## Limitaciones conocidas
 

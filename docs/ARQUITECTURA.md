@@ -22,6 +22,19 @@ También existen plantillas para `.env.qa` y `.env.main`. La diferencia está en
 - `qa`: gateway `9080`, inventory `9082`, postgres `6433`.
 - `main`: gateway `10080`, inventory `10082`, postgres `7433`.
 
+Para el módulo predictivo se debe levantar también este repositorio con el archivo `.env` del mismo ambiente:
+
+```bash
+cd ../FarmaExpres-Micro-NoSQL
+docker compose --env-file .env.dev up -d --build
+```
+
+Equivalencias:
+
+- `dev`: `BACKEND_NETWORK=farmaexpres-dev_default`, API directa `8085`, MongoDB `27017`, frontend auxiliar `5174`.
+- `qa`: `BACKEND_NETWORK=farmaexpres-qa_default`, API directa `9085`, MongoDB `37017`, frontend auxiliar `5175`.
+- `main`: `BACKEND_NETWORK=farmaexpres-main_default`, API directa `10085`, MongoDB `47017`, frontend auxiliar `5176`.
+
 Dentro de Docker los servicios conservan sus puertos internos; por ejemplo PostgreSQL sigue en `5432` dentro de la red de contenedores.
 
 Servicios principales:
